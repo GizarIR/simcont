@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'debug_toolbar',
+    'rest_framework',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -124,6 +126,31 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# ******** For debug tool django-debug-toolbar ***************
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
+# ******** End debug tool django-debug-toolbar block *********
+
+
+# **************Setting for Auth by Email:********************
+# https://medium.com/@therealak12/authenticate-using-email-instead-of-username-in-django-rest-framework-857645037bab
+# *******************************************************
+
+# For Customer default user model
+AUTH_USER_MODEL = 'users.CustomUser'
+
+# For tell Django to use this backend as the default authentication backend.
+AUTHENTICATION_BACKENDS = [
+    # 'django.contrib.auth.backends.ModelBackend',
+    'users.auth_backends.EmailBackend',
+]
+# ************* End Auth by Email Block*************************
+
+# REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
