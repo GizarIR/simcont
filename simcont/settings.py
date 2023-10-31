@@ -12,6 +12,16 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+from decouple import config
+
+# Read .env
+DATABASE_HOSTNAME = config('DEFAULT_DATABASE_HOSTNAME')
+DATABASE_DB = config("DEFAULT_DATABASE_DB")
+DATABASE_USER = config("DEFAULT_DATABASE_USER")
+DATABASE_PASSWORD = config("DEFAULT_DATABASE_PASSWORD")
+DATABASE_PORT = config("DEFAULT_DATABASE_PORT")
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,6 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-xg9ljtro^-70mbjs_=72w181-(or-8#j-j1qtn$*pv=ci!vic8'
+# SECRET_KEY = SECRET_KEY_PRJ
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -80,10 +91,16 @@ WSGI_APPLICATION = 'simcont.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': DATABASE_DB,
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': DATABASE_HOSTNAME,
+        'PORT': DATABASE_PORT,
+    },
 }
+
+
 
 
 # Password validation

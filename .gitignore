@@ -1,3 +1,7 @@
+sand_box.py
+default_database_data/
+pgadmin_data/
+.env
 .DS_Store
 # Byte-compiled / optimized / DLL files
 __pycache__/
