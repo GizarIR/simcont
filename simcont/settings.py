@@ -14,7 +14,7 @@ from pathlib import Path
 
 from decouple import config
 
-# Чтение переменных среды из файла .env
+# Read .env
 DATABASE_HOSTNAME = config('DEFAULT_DATABASE_HOSTNAME')
 DATABASE_DB = config("DEFAULT_DATABASE_DB")
 DATABASE_USER = config("DEFAULT_DATABASE_USER")
