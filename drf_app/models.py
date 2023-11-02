@@ -6,6 +6,15 @@ from django.utils.translation import gettext_lazy as _
 from users.models import CustomUser
 
 
+class Lang(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=150)
+    short_name = models.CharField(max_length=2)
+
+    def __str__(self):
+        return f"('{self.name}', '{self.short_name}')"
+
+
 class Vocabulary(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=150)
@@ -13,11 +22,11 @@ class Vocabulary(models.Model):
     time_create = models.DateTimeField(auto_now_add=True)
     time_update = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    lang_from = models.CharField(max_length=2)
-    lang_to = models.CharField(max_length=2)
+    lang_from = models.ForeignKey(Lang, related_name='voc_from', on_delete=models.CASCADE, null=True)
+    lang_to = models.ForeignKey(Lang, related_name='voc_to', on_delete=models.CASCADE, null=True)
     order_lemmas = models.JSONField()
     source_text = models.TextField()
-    users = models.ForeignKey("users.CustomUser", on_delete=models.PROTECT, null=True)
+    users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.title
@@ -36,19 +45,30 @@ class Lemma(models.Model):
         UNKNOWN = "UNKNOWN", _("Unknown")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # TODO Continue here
+    lemma = models.CharField(max_length=150)
     pos = models.CharField(
         max_length=7,
         choices=Pos.choices,
         default=Pos.UNKNOWN,
     )
+    translate = models.JSONField(null=True)
+    vocabularies = models.ManyToManyField(
+        Vocabulary,
+        through="VocabularyLemma",
+    )
+
+    def __str__(self):
+        return self.lemma
 
 
 class VocabularyLemma(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
+    lemma = models.ForeignKey(Lemma, on_delete=models.CASCADE)
+    frequency = models.IntegerField()
 
+    def __str__(self):
+        return f"('{self.vocabulary}', '{self.lemma}', '{self.frequency}')"
 
-class Pos(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
 
