@@ -5,6 +5,6 @@ from .models import Vocabulary, Lemma
 from .serializers import VocabularySerializer
 
 
-class VocabularyAPIView(generics.ListAPIView):
+class VocabularyAPIView(generics.ListCreateAPIView):
     queryset = Vocabulary.objects.all()
     serializer_class = VocabularySerializer
