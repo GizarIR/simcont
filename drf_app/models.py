@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from drf_app.validators import validate_json
 from users.models import CustomUser
 
 
@@ -24,7 +25,7 @@ class Vocabulary(models.Model):
     is_active = models.BooleanField(default=True)
     lang_from = models.ForeignKey(Lang, related_name='voc_from', on_delete=models.CASCADE)
     lang_to = models.ForeignKey(Lang, related_name='voc_to', on_delete=models.CASCADE)
-    order_lemmas = models.JSONField(blank=True)
+    order_lemmas = models.JSONField(default=dict, null=True, blank=True, validators=[validate_json])
     source_text = models.TextField()
     users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, blank=True)
 
