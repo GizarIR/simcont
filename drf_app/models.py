@@ -22,11 +22,11 @@ class Vocabulary(models.Model):
     time_create = models.DateTimeField(auto_now_add=True)
     time_update = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    lang_from = models.ForeignKey(Lang, related_name='voc_from', on_delete=models.CASCADE, null=True)
-    lang_to = models.ForeignKey(Lang, related_name='voc_to', on_delete=models.CASCADE, null=True)
-    order_lemmas = models.JSONField()
+    lang_from = models.ForeignKey(Lang, related_name='voc_from', on_delete=models.CASCADE)
+    lang_to = models.ForeignKey(Lang, related_name='voc_to', on_delete=models.CASCADE)
+    order_lemmas = models.JSONField(blank=True)
     source_text = models.TextField()
-    users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, null=True)
+    users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, blank=True)
 
     def __str__(self):
         return self.title
@@ -51,7 +51,7 @@ class Lemma(models.Model):
         choices=Pos.choices,
         default=Pos.UNKNOWN,
     )
-    translate = models.JSONField(null=True)
+    translate = models.JSONField(blank=True)
     vocabularies = models.ManyToManyField(
         Vocabulary,
         through="VocabularyLemma",
@@ -65,7 +65,7 @@ class VocabularyLemma(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
     lemma = models.ForeignKey(Lemma, on_delete=models.CASCADE)
-    frequency = models.IntegerField()
+    frequency = models.IntegerField(default=0)
 
     def __str__(self):
         return f"('{self.vocabulary}', '{self.lemma}', '{self.frequency}')"
