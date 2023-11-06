@@ -10,11 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import config
 
 # Read .env
+TOKEN_LIFE_MINUTES = config('TOKEN_LIFE_MINUTES')
+TOKEN_REFRESH_DAYS = config('TOKEN_REFRESH_DAYS')
 DATABASE_HOSTNAME = config('DEFAULT_DATABASE_HOSTNAME')
 DATABASE_DB = config("DEFAULT_DATABASE_DB")
 DATABASE_USER = config("DEFAULT_DATABASE_USER")
@@ -167,12 +170,13 @@ AUTHENTICATION_BACKENDS = [
 ]
 # ************* End Auth by Email Block*************************
 
-# REST Framework
+# ***************** REST Framework *****************
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+# ***************** END DRF *****************
 
 
 # ************* Load Images*************************
@@ -180,3 +184,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 # ************* End Load Images*************************
 
+
+# ************* Auth settint SimpleJWT *************************
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(TOKEN_LIFE_MINUTES)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(TOKEN_REFRESH_DAYS)),
+}
+# ************* END SimpleJWT *************************
