@@ -18,14 +18,20 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from . import settings
-from drf_app.views import VocabularyAPIView
+from drf_app.views import *
+from rest_framework import routers
+
+router = routers.SimpleRouter()
+
+router.register(r'vocabulary', VocabularyViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
     path("__debug__/", include("debug_toolbar.urls")),
-    path('api/v1/vocabularylist/', VocabularyAPIView.as_view()),
+    path('api/v1/', include(router.urls)),   # http://127.0.0.1:8000/api/v1/vocabulary/ CRUD
 ]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
