@@ -21,7 +21,7 @@ from . import settings
 from drf_app.views import *
 from rest_framework import routers
 
-router = routers.SimpleRouter()
+router = routers.DefaultRouter()
 
 router.register(r'vocabulary', VocabularyViewSet)
 
