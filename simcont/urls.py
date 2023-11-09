@@ -21,15 +21,16 @@ from . import settings
 from drf_app.views import *
 from rest_framework import routers
 
+# More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
 router = routers.DefaultRouter()
-
 router.register(r'vocabulary', VocabularyViewSet)
+router.register(r'lemma', LemmaViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
     path("__debug__/", include("debug_toolbar.urls")),
-    path('api/v1/', include(router.urls)),   # http://127.0.0.1:8000/api/v1/vocabulary/ CRUD
+    path('api/v1/', include(router.urls)),   # http://127.0.0.1:8000/api/v1/.../ CRUD
 ]
 
 
