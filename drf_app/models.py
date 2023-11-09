@@ -4,7 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from drf_app.validators import validate_json
-from users.models import CustomUser
+# from users.models import CustomUser
 
 
 class Lang(models.Model):
@@ -35,6 +35,7 @@ class Vocabulary(models.Model):
 
 class Lemma(models.Model):
     class Pos(models.TextChoices):
+        UNKNOWN = "UNKNOWN", _("Unknown")
         NOUN = "NOUN", _("Noun")
         ADJ = "ADJ", _("Adjective")
         VERB = "VERB", _("Verb")
@@ -43,7 +44,6 @@ class Lemma(models.Model):
         CONJ = "CONJ", _("Conjunction")
         PART = "PART", _("Particle")
         INTERJ = "INTERJ", _("Interjection")
-        UNKNOWN = "UNKNOWN", _("Unknown")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lemma = models.CharField(max_length=150)
@@ -70,6 +70,3 @@ class VocabularyLemma(models.Model):
 
     def __str__(self):
         return f"('{self.vocabulary}', '{self.lemma}', '{self.frequency}')"
-
-
-
