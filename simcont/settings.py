@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'debug_toolbar',
     'rest_framework',
+    'drf_yasg',
     'users.apps.UsersConfig',
     'drf_app.apps.Drf_appConfig',
 ]
@@ -73,7 +74,7 @@ ROOT_URLCONF = 'simcont.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'drf_app/templates/drf_app/')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
