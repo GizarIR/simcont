@@ -1,3 +1,4 @@
+from drf_yasg import openapi
 from rest_framework import serializers
 from .models import Vocabulary, Lemma, Lang, VocabularyLemma
 
@@ -9,6 +10,47 @@ class VocabularySerializer(serializers.ModelSerializer):
                   'lang_from', 'lang_to', 'order_lemmas', 'source_text', 'users')
 
 
+class TranslateField(serializers.JSONField):
+    """
+    Example:
+    {
+        "main_translate": ["orange", "ˈɒrɪndʒ", "апельсин", "существительное"],
+        "extra_main": [["orange", "оранжевый", "прилагательное"], ["orange", "оранжевый цвет", "существительное"]],
+        "users_inf": [{"user_id_1": "какой то специфичный перевод от пользователя"}, ...]
+    }
+    """
+
+    class Meta:
+        swagger_schema_fields = {
+            "type": openapi.TYPE_OBJECT,
+            "title": "Translation",  # Замените "YourObject" на подходящее название вашего объекта
+            "properties": {
+                "main_translate": openapi.Schema(
+                    title="Main translate of lemma",
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(type=openapi.TYPE_STRING),
+                ),
+                "extra_main": openapi.Schema(
+                    title="Extra translations of lemma",
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_ARRAY,
+                        items=openapi.Schema(type=openapi.TYPE_STRING),
+                    ),
+                ),
+                "users_inf": openapi.Schema(
+                    title="User extra information or translate \"user_id\": \"translate\"",
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        additional_properties=openapi.Schema(type=openapi.TYPE_STRING),
+                    ),
+                ),
+            },
+            "required": ["main_translate", "extra_main", "users_inf"],
+        }
+
+
 class LemmaSerializer(serializers.ModelSerializer):
     # For definition type of JSON field in Swagger use link:
     # https://drf-yasg.readthedocs.io/en/stable/custom_spec.html#:~:text=class%20EmailMessageField(,%3D%20EmailMessageField()
@@ -18,6 +60,7 @@ class LemmaSerializer(serializers.ModelSerializer):
         write_only=True,
         many=True
     )
+    translate = TranslateField()
 
     class Meta:
         model = Lemma
