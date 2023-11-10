@@ -10,6 +10,8 @@ class VocabularySerializer(serializers.ModelSerializer):
 
 
 class LemmaSerializer(serializers.ModelSerializer):
+    # For definition type of JSON field in Swagger use link:
+    # https://drf-yasg.readthedocs.io/en/stable/custom_spec.html#:~:text=class%20EmailMessageField(,%3D%20EmailMessageField()
     vocabularies = VocabularySerializer(many=True, read_only=True)
     vocabularies_id = serializers.PrimaryKeyRelatedField(
         queryset=Vocabulary.objects.all(),

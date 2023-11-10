@@ -1,4 +1,6 @@
 from django.shortcuts import render
+from drf_yasg.inspectors import SwaggerAutoSchema
+from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework import generics, viewsets
 from rest_framework.decorators import action
@@ -8,9 +10,23 @@ from .models import Vocabulary, Lemma, Lang
 from .serializers import VocabularySerializer, LemmaSerializer
 
 
+class CustomAutoSchema(SwaggerAutoSchema):
+    """
+    Overriding for group endpoints by ViewSets
+    Add param <my_tag> to ViewSet
+    """
+    def get_tags(self, operation_keys=None):
+        tags = self.overrides.get('tags', None) or getattr(self.view, 'my_tags', [])
+        if not tags:
+            tags = [operation_keys[0]]
+        return tags
+
+
 class VocabularyViewSet(viewsets.ModelViewSet):
     queryset = Vocabulary.objects.all()
     serializer_class = VocabularySerializer
+
+    my_tags = ['Vocabulary']
 
     # For describe custom queryset
     # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
@@ -45,6 +61,9 @@ class VocabularyViewSet(viewsets.ModelViewSet):
         })
 
 
+
 class LemmaViewSet(viewsets.ModelViewSet):
     queryset = Lemma.objects.all()
     serializer_class = LemmaSerializer
+
+    my_tags = ['Lemma']

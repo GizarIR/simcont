@@ -35,11 +35,11 @@ router.register(r'lemma', LemmaViewSet)
 # For Swagger
 schema_view = get_schema_view(
    openapi.Info(
-      title="Snippets API",
-      default_version='v1',
-      description="Test description",
+      title="Simcont API",
+      default_version='00.00.01',
+      description="REST API for application Simcont",
       terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contact@snippets.local"),
+      contact=openapi.Contact(email="gizarir@gmail.com"),
       license=openapi.License(name="BSD License"),
    ),
    public=True,

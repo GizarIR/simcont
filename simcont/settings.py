@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'debug_toolbar',
     'rest_framework',
-    'drf_yasg',
+    'drf_yasg', #https://drf-yasg.readthedocs.io/en/stable/index.html
     'users.apps.UsersConfig',
     'drf_app.apps.Drf_appConfig',
 ]
@@ -159,7 +159,7 @@ INTERNAL_IPS = [
 
 # **************Setting for Auth by Email:********************
 # https://medium.com/@therealak12/authenticate-using-email-instead-of-username-in-django-rest-framework-857645037bab
-# *******************************************************
+
 
 # For Customer default user model
 AUTH_USER_MODEL = 'users.CustomUser'
@@ -191,8 +191,13 @@ MEDIA_URL = '/media/'
 
 
 # ************* Auth settint SimpleJWT *************************
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(TOKEN_LIFE_MINUTES)),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(TOKEN_REFRESH_DAYS)),
 }
 # ************* END SimpleJWT *************************
+
+# ************* Swagger Setting  drf-yasg*************************
+SWAGGER_SETTINGS = {"DEFAULT_AUTO_SCHEMA_CLASS":"drf_app.views.CustomAutoSchema"}  # For group endpoints by ViewSets
+# ************* END Swagger*************************
