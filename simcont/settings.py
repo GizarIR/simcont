@@ -18,12 +18,15 @@ from decouple import config
 # Read .env
 TOKEN_LIFE_MINUTES = config('TOKEN_LIFE_MINUTES')
 TOKEN_REFRESH_DAYS = config('TOKEN_REFRESH_DAYS')
+
 DATABASE_HOSTNAME = config('DEFAULT_DATABASE_HOSTNAME')
 DATABASE_DB = config("DEFAULT_DATABASE_DB")
 DATABASE_USER = config("DEFAULT_DATABASE_USER")
 DATABASE_PASSWORD = config("DEFAULT_DATABASE_PASSWORD")
 DATABASE_PORT = config("DEFAULT_DATABASE_PORT")
 
+NLP_MAX_LENGTH = config('NLP_MAX_LENGTH')
+OPENAI_API_KEY = config('OPENAI_API_KEY')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
