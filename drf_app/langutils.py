@@ -78,6 +78,7 @@ class SimVoc:
         self.source_text = source_text
         self.users = users if users is not None else []
 
+    # TODO need to test
     @staticmethod
     def clean_text(row_text: str) -> str:
         print(f'Cleaning punctuation marks...')
@@ -90,6 +91,7 @@ class SimVoc:
         clearing_text = re.sub(r'\b\w{1}\b', '', clearing_text)
         return clearing_text
 
+    # TODO need to test
     @staticmethod
     def create_order_lemmas(source_text: str) -> dict:
         # Load the 'en_core_web_sm' model
@@ -113,6 +115,7 @@ class SimVoc:
 
         return order_lemmas
 
+    # TODO need to test
     @staticmethod
     def get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
         prompt_to_ai = (
@@ -145,6 +148,7 @@ class SimVoc:
         response_data = json.loads(response_str)
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
+    # TODO need to test
     @staticmethod
     def get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
         translator = Translator()
