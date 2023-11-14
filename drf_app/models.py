@@ -30,7 +30,7 @@ class Vocabulary(models.Model):
     users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, blank=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.title}: {self.id}"
 
 
 class Lemma(models.Model):
