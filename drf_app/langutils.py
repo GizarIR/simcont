@@ -1,12 +1,13 @@
 # https://pypi.org/project/googletrans/
 import json
+import os
 import re
 import time
 from datetime import datetime
 from enum import Enum
 from typing import Any
-from uuid import UUID
 
+import pdfplumber
 from googletrans import Translator, LANGUAGES
 
 # https://platform.openai.com/docs/quickstart?context=python
@@ -16,7 +17,7 @@ import openai
 import spacy
 
 # https://gtts.readthedocs.io/en/latest/index.html
-from gtts import gTTS
+# from gtts import gTTS
 
 from simcont import settings
 from tqdm import tqdm
@@ -24,15 +25,24 @@ import uuid
 
 
 class PartSpeech(str, Enum):
-    UNKNOWN = "UNKNOWN"
-    NOUN = "NOUN"
-    ADJ = "ADJ"
-    VERB = "VERB"
-    PROPN = "PROPN"
-    PRON = "PRON"
-    CONJ = "CONJ"
-    PART = "PART"
-    INTERJ = "INTERJ"
+    X = "X"  # other
+    ADJ = "ADJ"  # adjective
+    ADP = "ADP"  # adposition
+    ADV = "ADV"  # adverb
+    AUX = "AUX"  # auxiliary
+    CCONJ = "CCONJ"  # coordinating conjunction
+    DET = "DET"  # determiner
+    INTJ = "INTJ"  # interjection
+    NOUN = "NOUN"  # noun
+    NUM = "NUM"  # numeral
+    PART = "PART"  # particle
+    PRON = "PRON"  # pronoun
+    PROPN = "PROPN"  # proper noun
+    PUNCT = "PUNCT"  # punctuation
+    SCONJ = "SCONJ"  # subordinating conjunction
+    SYM = "SYM"  # symbol
+    SPACE = "SPACE"
+    VERB = "VERB"  # verb
 
 
 class SimVoc:
@@ -40,15 +50,24 @@ class SimVoc:
     SimVoc - class which contain specifically functions for handle vocabulary for app SimCont
     """
     pos_mapping = {
-        "UNKNOWN": PartSpeech.UNKNOWN,
-        "NOUN": PartSpeech.NOUN,
+        "X": PartSpeech.X,
         "ADJ": PartSpeech.ADJ,
-        "VERB": PartSpeech.VERB,
-        "PROPN": PartSpeech.PROPN,
-        "PRON": PartSpeech.PRON,
-        "CONJ": PartSpeech.CONJ,
+        "ADP": PartSpeech.ADP,
+        "ADV": PartSpeech.ADV,
+        "AUX": PartSpeech.AUX,
+        "CCONJ": PartSpeech.CCONJ,
+        "DET": PartSpeech.DET,
+        "INTJ": PartSpeech.INTJ,
+        "NOUN": PartSpeech.NOUN,
+        "NUM": PartSpeech.NUM,
         "PART": PartSpeech.PART,
-        "INTERJ": PartSpeech.INTERJ,
+        "PRON": PartSpeech.PRON,
+        "PROPN": PartSpeech.PROPN,
+        "PUNCT": PartSpeech.PUNCT,
+        "SCONJ": PartSpeech.SCONJ,
+        "SPACE": PartSpeech.SPACE,
+        "SYM": PartSpeech.SYM,
+        "VERB": PartSpeech.VERB
     }
 
     def __init__(
@@ -78,7 +97,27 @@ class SimVoc:
         self.source_text = source_text
         self.users = users if users is not None else []
 
-    # TODO need to test
+    @staticmethod
+    def print_order_lemmas_console(lemmas_dict: dict) -> Any:
+        for lemma, extra_data in lemmas_dict.items():
+            if extra_data[0] >= 3:
+                cur_pos = SimVoc.pos_mapping.get(extra_data[1], "X")
+                print(f"{lemma}: {extra_data[0]} : {cur_pos}")
+
+    @staticmethod
+    def convert_to_txt(file_obj):
+        doc_txt = ""
+        _, file_extension = os.path.splitext(file_obj.name)
+        if file_extension.lower() == '.pdf':
+            with pdfplumber.open(file_obj) as pdf:
+                for page in pdf.pages:
+                    doc_txt += page.extract_text()
+            return doc_txt
+        elif file_extension.lower() == '.txt':
+            return str(file_obj.read())
+        else:
+            return ""
+
     @staticmethod
     def clean_text(row_text: str) -> str:
         print(f'Cleaning punctuation marks...')
@@ -89,33 +128,51 @@ class SimVoc:
         clearing_text = re.sub(r'\w*\d\w*', '', clearing_text)
         print(f'Cleaning words with a length of 1 character...')
         clearing_text = re.sub(r'\b\w{1}\b', '', clearing_text)
-        return clearing_text
+        return str(clearing_text)
 
-    # TODO need to test
     @staticmethod
-    def create_order_lemmas(source_text: str) -> dict:
+    def create_order_lemmas(source_text: str, types: list[str] = None) -> dict:
+        """
+        Order like this:
+        json {
+            'lemma1':['12', 'NOUN'],
+            'lemma2': ['11', 'ADJ']
+              }
+        """
         # Load the 'en_core_web_sm' model
         nlp = spacy.load("en_core_web_sm")
-        nlp.max_length = settings.NLP_MAX_LENGTH
+        nlp.max_length = int(settings.NLP_MAX_LENGTH)
+
         # Process the sentence using the loaded model
         doc = nlp(source_text)
         unsorted_result = {}
         doc_len = len(doc) - 1
         progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=100)
 
-        for i in range(doc_len):
-            if doc[i].lemma_ in unsorted_result:
-                unsorted_result[doc[i].lemma_] += 1
-            else:
-                unsorted_result[doc[i].lemma_] = 1
-            progress_bar.update(1)
-            time.sleep(0.0001)
+        if types:
+            for i in range(doc_len):
+                if doc[i].pos_ in types:
+                    if doc[i].lemma_ in unsorted_result:
+                        unsorted_result[doc[i].lemma_][0] += 1
+                    else:
+                        unsorted_result[doc[i].lemma_] = [1, doc[i].pos_]
+                progress_bar.update(1)
+                time.sleep(0.0001)
+        else:
+            for i in range(doc_len):
+                if doc[i].lemma_ in unsorted_result:
+                    unsorted_result[doc[i].lemma_][0] += 1
+                else:
+                    unsorted_result[doc[i].lemma_] = [1, doc[i].pos_]
+                progress_bar.update(1)
+                time.sleep(0.0001)
 
-        order_lemmas = dict(sorted(unsorted_result.items(), key=lambda item: item[1]['frequency'], reverse=True))
+        order_lemmas = dict(sorted(unsorted_result.items(), key=lambda item: item[1][0], reverse=True))
+        progress_bar.close()
 
         return order_lemmas
 
-    # TODO need to test
+    # TODO need to test get_translate_chatgpt
     @staticmethod
     def get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
         prompt_to_ai = (
@@ -148,7 +205,7 @@ class SimVoc:
         response_data = json.loads(response_str)
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
-    # TODO need to test
+    # TODO need to test get_translate_gtrans
     @staticmethod
     def get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
         translator = Translator()
@@ -166,7 +223,7 @@ class SimVoc:
                 translated.origin,
                 translated.extra_data['origin_pronunciation'],
                 translated.text,
-                SimVoc.pos_mapping.get(pos_tags[0][1], 'UNKNOWN'),
+                SimVoc.pos_mapping.get(pos_tags[0][1], 'X'),
             ],
             "extra_data": []
         }
@@ -174,6 +231,16 @@ class SimVoc:
 
 
 if __name__ == '__main__':
-    # source_path = 'source/pmbok5en.pdf'
-    source_path = 'source/test_article.pdf'
+    # file_path = 'sandbox/pmbok5en.pdf'
+    source_path = 'sandbox/test_article.pdf'
+    current_path = os.path.abspath(__file__)
+    parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
+    file_path = os.path.join(parent_path, source_path)
+    testVoc = SimVoc()
 
+    with open(file_path, 'rb') as file:
+        result = testVoc.convert_to_txt(file)
+        result = testVoc.clean_text(result)
+        order_dict = testVoc.create_order_lemmas(result)
+        testVoc.print_order_lemmas_console(order_dict)
+        print(order_dict)

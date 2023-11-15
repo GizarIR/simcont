@@ -4,6 +4,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from drf_app.validators import validate_json
+
+
 # from users.models import CustomUser
 
 
@@ -34,6 +36,7 @@ class Vocabulary(models.Model):
 
 
 class Lemma(models.Model):
+    # TODO need to bring it into compliance with Universal POS tags
     class Pos(models.TextChoices):
         UNKNOWN = "UNKNOWN", _("Unknown")
         NOUN = "NOUN", _("Noun")
