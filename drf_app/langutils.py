@@ -24,6 +24,8 @@ from tqdm import tqdm
 import uuid
 
 
+openai.api_key = settings.OPENAI_API_KEY
+
 class PartSpeech(str, Enum):
     X = "X"  # other
     ADJ = "ADJ"  # adjective
@@ -172,14 +174,14 @@ class SimVoc:
 
         return order_lemmas
 
-    # TODO need to test get_translate_chatgpt
+
     @staticmethod
     def get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
         prompt_to_ai = (
             "Переведи на {} слово {} с не больше {} дополнительных значений "
             "в формате:"
             "{{"
-            "\"main_translate\": [ {}, произношение, перевод, часть речи],"
+            "\"main_translate\": [ {}, произношение, перевод, часть речи в UP Tags],"
             "\"extra_main\": [[ {}, перевод, часть речи], ...]"
             "}}"
         )
@@ -199,17 +201,27 @@ class SimVoc:
             stop=None,
             timeout=50  # Опционально: установите таймаут на запрос
         )
-        print(f"Number of tokens for request: {response['usage']['total_tokens']}")
+        # print(f"Number of tokens for request: {response['usage']['total_tokens']}")
         response = response.choices[0].text.strip()
         response_str = response.replace('\n', '')
         response_data = json.loads(response_str)
+        response_data["users_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
-    # TODO need to test get_translate_gtrans
+
     @staticmethod
     def get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
+        """
+            For work well you need specific version googletrans==4.0.0-rc1
+            Translate text_to_translate using FREE googletrans service
+            :param text_to_translate:  word which you need to translate
+            :type text_to_translate: string
+            :param lang_to: language which you want to get translate
+            :type lang_to: string, limit 2 symbols, for example - 'ru', 'en', 'de'
+        """
         translator = Translator()
         translated = translator.translate(text_to_translate, dest=lang_to)
+        # print(translated.extra_data)
 
         # Handle text by spaCy for POS
         nlp = spacy.load("en_core_web_sm")
@@ -225,22 +237,34 @@ class SimVoc:
                 translated.text,
                 SimVoc.pos_mapping.get(pos_tags[0][1], 'X'),
             ],
-            "extra_data": []
+            "extra_data": [],
+            "users_inf": []
         }
         return json.dumps(response_data, ensure_ascii=False)  # to JSON string
 
 
 if __name__ == '__main__':
     # file_path = 'sandbox/pmbok5en.pdf'
-    source_path = 'sandbox/test_article.pdf'
-    current_path = os.path.abspath(__file__)
-    parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
-    file_path = os.path.join(parent_path, source_path)
-    testVoc = SimVoc()
+    # source_path = 'sandbox/test_article.pdf'
+    # current_path = os.path.abspath(__file__)
+    # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
+    # file_path = os.path.join(parent_path, source_path)
+    # testVoc = SimVoc()
+    #
+    # with open(file_path, 'rb') as file:
+    #     result = testVoc.convert_to_txt(file)
+    #     result = testVoc.clean_text(result)
+    #     order_dict = testVoc.create_order_lemmas(result)
+    #     testVoc.print_order_lemmas_console(order_dict)
+    #     print(order_dict)
 
-    with open(file_path, 'rb') as file:
-        result = testVoc.convert_to_txt(file)
-        result = testVoc.clean_text(result)
-        order_dict = testVoc.create_order_lemmas(result)
-        testVoc.print_order_lemmas_console(order_dict)
-        print(order_dict)
+
+    # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
+    # translated_dict = json.loads(SimVoc.get_translate_chatgpt('orange', 'ru')) # to JSON object
+    # print(translated_dict)
+    # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'существительное'],
+    # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
+
+    print(f"{'*' * 15} Test GT {'*' * 15}")
+    translated_dict = json.loads(SimVoc.get_translate_gtrans("people", "ru"))  # to JSON object - dict
+    print(translated_dict)
