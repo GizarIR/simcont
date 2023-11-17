@@ -36,24 +36,32 @@ class Vocabulary(models.Model):
 
 
 class Lemma(models.Model):
-    # TODO need to bring it into compliance with Universal POS tags
     class Pos(models.TextChoices):
-        UNKNOWN = "UNKNOWN", _("Unknown")
-        NOUN = "NOUN", _("Noun")
+        X = "X", _("Other")
         ADJ = "ADJ", _("Adjective")
-        VERB = "VERB", _("Verb")
-        PROPN = "PROPN", _("Preposition")
-        PRON = "PRON", _("Pronoun")
-        CONJ = "CONJ", _("Conjunction")
-        PART = "PART", _("Particle")
-        INTERJ = "INTERJ", _("Interjection")
+        ADP = "ADP", _("adposition")
+        ADV = "ADV", _("adverb")
+        AUX = "AUX", _("auxiliary")
+        CCONJ = "CCONJ", _("coordinating conjunction")
+        DET = "DET", _("determiner")
+        INTJ = "INTJ", _("interjection")
+        NOUN = "NOUN", _("noun")
+        NUM = "NUM", _("numeral")
+        PART = "PART", _("particle")
+        PRON = "PRON", _("pronoun")
+        PROPN = "PROPN", _("proper noun")
+        PUNCT = "PUNCT", _("punctuation")
+        SCONJ = "SCONJ", _("subordinating conjunction")
+        SYM = "SYM", _("symbol")
+        SPACE = "SPACE", _("space")
+        VERB = "VERB", _("verb")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lemma = models.CharField(max_length=150)
     pos = models.CharField(
         max_length=7,
         choices=Pos.choices,
-        default=Pos.UNKNOWN,
+        default=Pos.X,
     )
     translate = models.JSONField(blank=True)
     vocabularies = models.ManyToManyField(

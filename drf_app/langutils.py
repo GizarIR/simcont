@@ -174,7 +174,6 @@ class SimVoc:
 
         return order_lemmas
 
-
     @staticmethod
     def get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
         prompt_to_ai = (
@@ -182,7 +181,7 @@ class SimVoc:
             "в формате:"
             "{{"
             "\"main_translate\": [ {}, произношение, перевод, часть речи в UP Tags],"
-            "\"extra_main\": [[ {}, перевод, часть речи], ...]"
+            "\"extra_data\": [[ {}, перевод, часть речи], ...]"
             "}}"
         )
 
@@ -201,11 +200,11 @@ class SimVoc:
             stop=None,
             timeout=50  # Опционально: установите таймаут на запрос
         )
-        # print(f"Number of tokens for request: {response['usage']['total_tokens']}")
+        print(f"Number of tokens for request: {response['usage']['total_tokens']}")
         response = response.choices[0].text.strip()
         response_str = response.replace('\n', '')
         response_data = json.loads(response_str)
-        response_data["users_inf"] = []
+        response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
 
@@ -221,7 +220,6 @@ class SimVoc:
         """
         translator = Translator()
         translated = translator.translate(text_to_translate, dest=lang_to)
-        # print(translated.extra_data)
 
         # Handle text by spaCy for POS
         nlp = spacy.load("en_core_web_sm")
