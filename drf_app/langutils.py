@@ -100,11 +100,11 @@ class SimVoc:
         self.users = users if users is not None else []
 
     @staticmethod
-    def print_order_lemmas_console(lemmas_dict: dict) -> Any:
+    def print_order_lemmas_console(lemmas_dict: dict, limit: int = 1) -> Any:
         for lemma, extra_data in lemmas_dict.items():
-            if extra_data[0] >= 3:
+            if extra_data[0] >= limit:
                 cur_pos = SimVoc.pos_mapping.get(extra_data[1], "X")
-                print(f"{lemma}: {extra_data[0]} : {cur_pos}")
+                print(f"{lemma}: {extra_data[0]} : {cur_pos.name}")
 
     @staticmethod
     def convert_to_txt(file_obj):
@@ -242,8 +242,9 @@ class SimVoc:
 
 
 if __name__ == '__main__':
-    # file_path = 'sandbox/pmbok5en.pdf'
+    # source_path = 'sandbox/pmbok5en.pdf'
     # source_path = 'sandbox/test_article.pdf'
+    # source_path = 'sandbox/test_speech.txt'
     # current_path = os.path.abspath(__file__)
     # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
     # file_path = os.path.join(parent_path, source_path)
@@ -254,7 +255,7 @@ if __name__ == '__main__':
     #     result = testVoc.clean_text(result)
     #     order_dict = testVoc.create_order_lemmas(result)
     #     testVoc.print_order_lemmas_console(order_dict)
-    #     print(order_dict)
+        # print(order_dict)
 
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
