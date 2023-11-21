@@ -18,7 +18,7 @@ class OrderLemmasField(serializers.JSONField):
             "type": openapi.TYPE_OBJECT,
             "title": "Order of lemmas for vocabulary",
             "additional_properties": openapi.Schema(
-                title="Words and their frequency and other params if you need",
+                title="Words and their frequency, also other params if you need",
                 type=openapi.TYPE_ARRAY,
                 items=openapi.Schema(type=openapi.TYPE_STRING),
             ),
