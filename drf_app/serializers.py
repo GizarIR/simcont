@@ -23,7 +23,7 @@ class TranslateField(serializers.JSONField):
     class Meta:
         swagger_schema_fields = {
             "type": openapi.TYPE_OBJECT,
-            "title": "Translation",  # Замените "YourObject" на подходящее название вашего объекта
+            "title": "Translation",
             "properties": {
                 "main_translate": openapi.Schema(
                     title="Main translate of lemma",

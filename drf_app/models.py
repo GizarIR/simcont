@@ -59,11 +59,11 @@ class Lemma(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lemma = models.CharField(max_length=150)
     pos = models.CharField(
-        max_length=7,
+        max_length=5,
         choices=Pos.choices,
         default=Pos.X,
     )
-    translate = models.JSONField(blank=True)
+    translate = models.JSONField(blank=True, validators=[validate_json])
     vocabularies = models.ManyToManyField(
         Vocabulary,
         through="VocabularyLemma",
