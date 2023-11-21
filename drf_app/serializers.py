@@ -3,7 +3,31 @@ from rest_framework import serializers
 from .models import Vocabulary, Lemma, Lang, VocabularyLemma
 
 
+class OrderLemmasField(serializers.JSONField):
+    """
+    Example:
+    {
+        "lemma_1": ["100"],
+        "lemma_2": ["58"],
+        ...
+        "lemma_N": ["1"],
+    }
+    """
+    class Meta:
+        swagger_schema_fields = {
+            "type": openapi.TYPE_OBJECT,
+            "title": "Order of lemmas for vocabulary",
+            "additional_properties": openapi.Schema(
+                title="Words and their frequency and other params if you need",
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(type=openapi.TYPE_STRING),
+            ),
+        }
+
+
 class VocabularySerializer(serializers.ModelSerializer):
+    order_lemmas = OrderLemmasField()
+
     class Meta:
         model = Vocabulary
         fields = ('id', 'title', 'description', 'time_create', 'time_update', 'is_active',
