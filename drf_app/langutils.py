@@ -19,10 +19,13 @@ import spacy
 # https://gtts.readthedocs.io/en/latest/index.html
 # from gtts import gTTS
 
-from simcont import settings
 from tqdm import tqdm
 import uuid
 
+import asyncio
+from asgiref.sync import sync_to_async
+
+from simcont import settings
 
 openai.api_key = settings.OPENAI_API_KEY
 
@@ -133,7 +136,7 @@ class SimVoc:
         return str(clearing_text)
 
     @staticmethod
-    def create_order_lemmas(source_text: str, types: list[str] = None) -> dict:
+    async def create_order_lemmas(source_text: str, types: list[str] = None) -> dict:
         """
         Order like this:
         json {
@@ -244,18 +247,18 @@ class SimVoc:
 if __name__ == '__main__':
     # source_path = 'sandbox/pmbok5en.pdf'
     # source_path = 'sandbox/test_article.pdf'
-    # source_path = 'sandbox/test_speech.txt'
-    # current_path = os.path.abspath(__file__)
-    # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
-    # file_path = os.path.join(parent_path, source_path)
-    # testVoc = SimVoc()
-    #
-    # with open(file_path, 'rb') as file:
-    #     result = testVoc.convert_to_txt(file)
-    #     result = testVoc.clean_text(result)
-    #     order_dict = testVoc.create_order_lemmas(result)
-    #     testVoc.print_order_lemmas_console(order_dict)
-        # print(order_dict)
+    source_path = 'sandbox/test_speech.txt'
+    current_path = os.path.abspath(__file__)
+    parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
+    file_path = os.path.join(parent_path, source_path)
+    testVoc = SimVoc()
+
+    with open(file_path, 'rb') as file:
+        result = testVoc.convert_to_txt(file)
+        result = testVoc.clean_text(result)
+        order_dict = sync_to_async(testVoc.create_order_lemmas(result))
+        testVoc.print_order_lemmas_console(order_dict)
+        print(order_dict)
 
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
@@ -264,6 +267,6 @@ if __name__ == '__main__':
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'существительное'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    print(f"{'*' * 15} Test GT {'*' * 15}")
-    translated_dict = json.loads(SimVoc.get_translate_gtrans("people", "ru"))  # to JSON object - dict
-    print(translated_dict)
+    # print(f"{'*' * 15} Test GT {'*' * 15}")
+    # translated_dict = json.loads(SimVoc.get_translate_gtrans("people", "ru"))  # to JSON object - dict
+    # print(translated_dict)
