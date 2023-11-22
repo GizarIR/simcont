@@ -42,6 +42,9 @@ class VocabularyViewSet(viewsets.ModelViewSet):
     # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
     @action(methods=['get', 'post'], detail=False)
     def languages(self, request):
+        """
+        For end points /api/v1/vocabulary/languages/
+        """
         langs = Lang.objects.all()
         return Response([
             {
@@ -53,13 +56,15 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get', 'put'], detail=True)
     def language(self, request, pk=None):
+        """
+        For endpoints /api/v1/vocabulary/{id}/language/
+        """
         lang = Lang.objects.get(pk=pk)
         return Response({
             'id': lang.id,
             'name': lang.name,
             'short_name': lang.short_name
         })
-
 
 
 class LemmaViewSet(viewsets.ModelViewSet):

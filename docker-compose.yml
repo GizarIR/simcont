@@ -18,6 +18,12 @@ services:
 #      network:
 #        ipv4_address: ${DEFAULT_DATABASE_IP}
 
+  redis:
+    image: "redis:latest"
+    ports:
+      - "${REDIS_PORT}:6379"
+
+
 #  pgadmin:
 #    container_name: simcont_pgadmin
 #    image: dpage/pgadmin4:latest

@@ -22,9 +22,6 @@ import spacy
 from tqdm import tqdm
 import uuid
 
-import asyncio
-from asgiref.sync import sync_to_async
-
 from simcont import settings
 
 openai.api_key = settings.OPENAI_API_KEY
@@ -136,7 +133,7 @@ class SimVoc:
         return str(clearing_text)
 
     @staticmethod
-    async def create_order_lemmas(source_text: str, types: list[str] = None) -> dict:
+    def create_order_lemmas(source_text: str, types: list[str] = None) -> dict:
         """
         Order like this:
         json {
@@ -256,7 +253,7 @@ if __name__ == '__main__':
     with open(file_path, 'rb') as file:
         result = testVoc.convert_to_txt(file)
         result = testVoc.clean_text(result)
-        order_dict = sync_to_async(testVoc.create_order_lemmas(result))
+        order_dict = testVoc.create_order_lemmas(result)
         testVoc.print_order_lemmas_console(order_dict)
         print(order_dict)
 

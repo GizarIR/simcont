@@ -28,6 +28,8 @@ DATABASE_PORT = config("DEFAULT_DATABASE_PORT")
 NLP_MAX_LENGTH = config('NLP_MAX_LENGTH')
 OPENAI_API_KEY = config('OPENAI_API_KEY')
 
+REDIS_PORT = config('REDIS_PORT')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -204,3 +206,14 @@ SIMPLE_JWT = {
 # ************* Swagger Setting  drf-yasg*************************
 SWAGGER_SETTINGS = {"DEFAULT_AUTO_SCHEMA_CLASS":"drf_app.views.CustomAutoSchema"}  # For group endpoints by ViewSets
 # ************* END Swagger*************************
+
+# ************* Celery *************************
+CELERY_BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+# ************* END Celery *************************
+
+# ************* Any*************************
+# ************* END Any *************************
