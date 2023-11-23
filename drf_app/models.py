@@ -27,7 +27,7 @@ class Vocabulary(models.Model):
     is_active = models.BooleanField(default=True)
     lang_from = models.ForeignKey(Lang, related_name='voc_from', on_delete=models.CASCADE)
     lang_to = models.ForeignKey(Lang, related_name='voc_to', on_delete=models.CASCADE)
-    order_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json])
+    order_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
     source_text = models.TextField()
     users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, blank=True)
 
