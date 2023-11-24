@@ -133,7 +133,7 @@ class SimVoc:
         return str(clearing_text)
 
     @staticmethod
-    def create_order_lemmas(source_text: str, types: list[str] = None) -> dict:
+    def create_order_lemmas(source_text: str, types: list[str] = None, cons_mode: bool = False) -> dict:
         """
         Order like this:
         json {
@@ -149,7 +149,9 @@ class SimVoc:
         doc = nlp(source_text)
         unsorted_result = {}
         doc_len = len(doc) - 1
-        progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=100)
+        # TODO need to update handle cons_mode
+        if cons_mode:
+            progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=100)
 
         if types:
             for i in range(doc_len):
@@ -158,19 +160,23 @@ class SimVoc:
                         unsorted_result[doc[i].lemma_][0] += 1
                     else:
                         unsorted_result[doc[i].lemma_] = [1, doc[i].pos_]
-                progress_bar.update(1)
-                time.sleep(0.0001)
+                if cons_mode:
+                    progress_bar.update(1)
+                    time.sleep(0.0001)
         else:
             for i in range(doc_len):
                 if doc[i].lemma_ in unsorted_result:
                     unsorted_result[doc[i].lemma_][0] += 1
                 else:
                     unsorted_result[doc[i].lemma_] = [1, doc[i].pos_]
-                progress_bar.update(1)
-                time.sleep(0.0001)
+                if cons_mode:
+                    progress_bar.update(1)
+                    time.sleep(0.0001)
 
         order_lemmas = dict(sorted(unsorted_result.items(), key=lambda item: item[1][0], reverse=True))
-        progress_bar.close()
+
+        if cons_mode:
+            progress_bar.close()
 
         return order_lemmas
 
