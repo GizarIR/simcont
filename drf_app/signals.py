@@ -14,7 +14,7 @@ def order_lemmas_create(sender, instance, created, **kwargs):
     print('Send source_txt fo r create order_lemmas for vocabulary:', instance)
     if created:
         # Выполните здесь ваш код для длительных вычислений
-        result = create_order_lemmas_async.apply_async(args=[instance.source_text], countdown=5)
+        create_order_lemmas_async.apply_async(args=[instance.pk], countdown=5)
         # Сохраните результат в поле order_lemmas
         instance.save()
     return None
