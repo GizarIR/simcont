@@ -9,7 +9,7 @@ attrs==23.1.0
 billiard==4.2.0
 blis==0.7.11
 catalogue==2.0.10
-celery==5.3.5
+celery==5.3.6
 certifi==2023.7.22
 cffi==1.16.0
 chardet==3.0.4

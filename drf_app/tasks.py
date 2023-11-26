@@ -1,14 +1,14 @@
 import json
-from uuid import UUID
-from typing import Any
 
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 
+
 from .langutils import SimVoc
 from .models import Vocabulary
+
 
 
 # TODO update func create_order_lemmas_async
@@ -16,7 +16,6 @@ from .models import Vocabulary
 def create_order_lemmas_async(voc_id) -> None:
     try:
         vocabulary = Vocabulary.objects.get(pk=voc_id)
-
         if not vocabulary:
             print(f"Vocabulary with id {voc_id} does not exist.")
             return None
