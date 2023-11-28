@@ -63,7 +63,7 @@ class Lemma(models.Model):
         choices=Pos.choices,
         default=Pos.X,
     )
-    translate = models.JSONField(blank=True, validators=[validate_json])
+    translate = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
     vocabularies = models.ManyToManyField(
         Vocabulary,
         through="VocabularyLemma",
