@@ -31,6 +31,27 @@ class Vocabulary(models.Model):
     source_text = models.TextField()
     users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, blank=True)
 
+    @property
+    def order_lemmas_update(self):
+        # TODO need to create SimCont update_order_lemmas and choose way of get data form DB
+        # way 1
+        qs_lemmas = Lemma.objects.filter(
+            vocabularies=self
+        ).values(
+            'lemma',
+            'vocabularylemma__frequency'
+        ).order_by('-vocabularylemma__frequency')
+
+        # way 2
+        # ls_lemmas = list(VocabularyLemma.objects.filter(
+        #     vocabulary=self
+        # ).select_related('vocabulary').values_list(
+        #     'lemma_id__lemma',
+        #     'frequency')
+        # )
+
+        return qs_lemmas
+
     def __str__(self):
         return f"{self.title}: {self.id}"
 
