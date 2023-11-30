@@ -108,6 +108,10 @@ class SimVoc:
 
     @staticmethod
     def convert_to_txt(file_obj):
+        """
+        Support file's format:
+            TXT, PDF
+        """
         doc_txt = ""
         _, file_extension = os.path.splitext(file_obj.name)
         if file_extension.lower() == '.pdf':

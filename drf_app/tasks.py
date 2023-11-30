@@ -10,7 +10,7 @@ from .langutils import SimVoc
 from .models import Vocabulary, Lemma
 
 
-# TODO update func create_order_lemmas_async and setup logging
+# TODO update func create_order_lemmas_async using logging
 @shared_task
 def create_order_lemmas_async(voc_id) -> None:
     try:
@@ -25,9 +25,6 @@ def create_order_lemmas_async(voc_id) -> None:
             vocabulary.order_lemmas = order_lemmas_json
             vocabulary.save()
 
-            print(f"Finished process of create order_lemmas for {voc_id}")
-
-            # TODO need to test at first
             for key, value in order_lemmas_dict.items():
                 if not Lemma.objects.filter(lemma=key).exists():
                     new_lemma = Lemma.objects.create(lemma=key, pos=value[1])
@@ -38,6 +35,7 @@ def create_order_lemmas_async(voc_id) -> None:
                     cur_lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value[0]})
                     # cur_lemma.save()
 
+            print(f"Finished process of create order_lemmas for {voc_id}")
 
     except ObjectDoesNotExist:
         print(f"Vocabulary with id {voc_id} does not exist.")
