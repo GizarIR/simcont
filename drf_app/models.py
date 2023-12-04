@@ -32,7 +32,7 @@ class Vocabulary(models.Model):
     users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, blank=True)
 
     @property
-    def order_lemmas_update(self):
+    def order_lemmas_updated(self):
         # TODO need to create SimCont update_order_lemmas and choose way of get data form DB
         # way 1
         qs_lemmas = Lemma.objects.filter(

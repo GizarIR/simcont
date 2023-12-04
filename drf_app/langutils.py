@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+from collections import defaultdict
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -51,6 +52,10 @@ class SimVoc:
     """
     SimVoc - class which contain specifically functions for handle vocabulary for app SimCont
     """
+    SPACY_MODEL = "en_core_web_sm"
+    NLP_MAX_LENGTH = int(settings.NLP_MAX_LENGTH)
+    nlp_instance = None
+
     pos_mapping = {
         "X": PartSpeech.X,
         "ADJ": PartSpeech.ADJ,
@@ -99,12 +104,17 @@ class SimVoc:
         self.source_text = source_text
         self.users = users if users is not None else []
 
+    @classmethod
+    def load_spacy_model(cls):
+        if cls.nlp_instance is None:
+            cls.nlp_instance = spacy.load(cls.SPACY_MODEL)
+            cls.nlp_instance.max_length = cls.NLP_MAX_LENGTH
+
     @staticmethod
     def print_order_lemmas_console(lemmas_dict: dict, limit: int = 1) -> Any:
         for lemma, extra_data in lemmas_dict.items():
-            if extra_data[0] >= limit:
-                cur_pos = SimVoc.pos_mapping.get(extra_data[1], "X")
-                print(f"{lemma}: {extra_data[0]} : {cur_pos.name}")
+            if extra_data >= limit:
+                print(f"{lemma}: {extra_data}")
 
     @staticmethod
     def convert_to_txt(file_obj):
@@ -141,46 +151,31 @@ class SimVoc:
         """
         Order like this:
         json {
-            'lemma1':['12', 'NOUN'],
-            'lemma2': ['11', 'ADJ']
+            'lemma1': 12,
+            'lemma2': 11
               }
         """
         # Load the 'en_core_web_sm' model
-        nlp = spacy.load("en_core_web_sm")
-        nlp.max_length = int(settings.NLP_MAX_LENGTH)
+        SimVoc.load_spacy_model()
 
         # Process the sentence using the loaded model
-        doc = nlp(source_text)
-        unsorted_result = {}
+        # doc = nlp(source_text)
+        doc = SimVoc.nlp_instance(source_text)
+        unsorted_result = defaultdict(int)
         doc_len = len(doc) - 1
-        # TODO need to update handle cons_mode
         if cons_mode:
             progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=100)
-
-        if types:
             for i in range(doc_len):
-                if doc[i].pos_ in types:
-                    if doc[i].lemma_ in unsorted_result:
-                        unsorted_result[doc[i].lemma_][0] += 1
-                    else:
-                        unsorted_result[doc[i].lemma_] = [1, doc[i].pos_]
-                if cons_mode:
+                if not types or doc[i].pos_ in types:
+                    unsorted_result[doc[i].lemma_] += 1
                     progress_bar.update(1)
-                    time.sleep(0.0001)
+            progress_bar.close()
         else:
             for i in range(doc_len):
-                if doc[i].lemma_ in unsorted_result:
-                    unsorted_result[doc[i].lemma_][0] += 1
-                else:
-                    unsorted_result[doc[i].lemma_] = [1, doc[i].pos_]
-                if cons_mode:
-                    progress_bar.update(1)
-                    time.sleep(0.0001)
+                if not types or doc[i].pos_ in types:
+                    unsorted_result[doc[i].lemma_] += 1
 
-        order_lemmas = dict(sorted(unsorted_result.items(), key=lambda item: item[1][0], reverse=True))
-
-        if cons_mode:
-            progress_bar.close()
+        order_lemmas = dict(sorted(unsorted_result.items(), key=lambda item: item[1], reverse=True))
 
         return order_lemmas
 
@@ -253,8 +248,8 @@ class SimVoc:
 
 if __name__ == '__main__':
     # source_path = 'sandbox/pmbok5en.pdf'
-    # source_path = 'sandbox/test_article.pdf'
-    source_path = 'sandbox/test_speech.txt'
+    source_path = 'sandbox/test_article.pdf'
+    # source_path = 'sandbox/test_speech.txt'
     current_path = os.path.abspath(__file__)
     parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
     file_path = os.path.join(parent_path, source_path)
