@@ -212,7 +212,6 @@ class SimVoc:
         response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
-
     @staticmethod
     def get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
         """

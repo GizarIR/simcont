@@ -7,10 +7,10 @@ class OrderLemmasField(serializers.JSONField):
     """
     Example:
     {
-        "lemma_1": ["100"],
-        "lemma_2": ["58"],
+        "lemma_1": 100,
+        "lemma_2": 58,
         ...
-        "lemma_N": ["1"],
+        "lemma_N": 1,
     }
     """
     class Meta:
@@ -18,9 +18,8 @@ class OrderLemmasField(serializers.JSONField):
             "type": openapi.TYPE_OBJECT,
             "title": "Order of lemmas for vocabulary",
             "additional_properties": openapi.Schema(
-                title="Words and their frequency, also other params of lemma if you need",
-                type=openapi.TYPE_ARRAY,
-                items=openapi.Schema(type=openapi.TYPE_STRING),
+                title="Words and their frequency",
+                type=openapi.TYPE_INTEGER,  # Assuming frequency is represented by integers
                 default=None,
             ),
         }
@@ -32,7 +31,7 @@ class VocabularySerializer(serializers.ModelSerializer):
     class Meta:
         model = Vocabulary
         fields = ('id', 'title', 'description', 'time_create', 'time_update', 'is_active',
-                  'lang_from', 'lang_to', 'order_lemmas', 'source_text', 'users')
+                  'lang_from', 'lang_to', 'order_lemmas', 'source_text', 'users', 'order_lemmas_updated')
 
 
 class TranslateField(serializers.JSONField):

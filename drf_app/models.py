@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from django.db import models
@@ -33,8 +34,6 @@ class Vocabulary(models.Model):
 
     @property
     def order_lemmas_updated(self):
-        # TODO need to create SimCont update_order_lemmas and choose way of get data form DB
-        # way 1
         qs_lemmas = Lemma.objects.filter(
             vocabularies=self
         ).values(
@@ -42,15 +41,14 @@ class Vocabulary(models.Model):
             'vocabularylemma__frequency'
         ).order_by('-vocabularylemma__frequency')
 
-        # way 2
-        # ls_lemmas = list(VocabularyLemma.objects.filter(
-        #     vocabulary=self
-        # ).select_related('vocabulary').values_list(
-        #     'lemma_id__lemma',
-        #     'frequency')
-        # )
+        order_lemmas_dict = {}
 
-        return qs_lemmas
+        for item in qs_lemmas:
+            order_lemmas_dict[item['lemma']] = item['vocabularylemma__frequency']
+
+        order_lemmas_json = json.dumps(order_lemmas_dict, ensure_ascii=False)
+
+        return order_lemmas_json
 
     def __str__(self):
         return f"{self.title}: {self.id}"
