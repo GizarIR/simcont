@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import logging
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -16,6 +17,7 @@ from pathlib import Path
 from decouple import config
 
 # Read .env
+DJANGO_ENV = config('DJANGO_ENV')
 TOKEN_LIFE_MINUTES = config('TOKEN_LIFE_MINUTES')
 TOKEN_REFRESH_DAYS = config('TOKEN_REFRESH_DAYS')
 
@@ -42,7 +44,7 @@ SECRET_KEY = 'django-insecure-xg9ljtro^-70mbjs_=72w181-(or-8#j-j1qtn$*pv=ci!vic8
 # SECRET_KEY = SECRET_KEY_PRJ
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = DJANGO_ENV == 'DEV'
 
 ALLOWED_HOSTS = []
 
@@ -218,5 +220,38 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # ************* END Celery *************************
 
+# ************* Any*************************
+# Setup logging level
+# LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO
+LOGGING_LEVEL = logging.INFO
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'logs/file.log',
+        },
+    },
+    'root': {
+        'handlers': ['console' if DEBUG else 'file'],
+        'level': LOGGING_LEVEL,
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console' if DEBUG else 'file'],
+            'level': LOGGING_LEVEL,
+            'propagate': True,
+        },
+    },
+}
+
+# ************* END Any *************************
+# ************* Any*************************
+# ************* END Any *************************
 # ************* Any*************************
 # ************* END Any *************************

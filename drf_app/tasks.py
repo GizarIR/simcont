@@ -1,4 +1,5 @@
 import json
+import logging
 
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -10,13 +11,15 @@ from .langutils import SimVoc
 from .models import Vocabulary, Lemma
 
 
-# TODO update func create_order_lemmas_async using logging
+logger = logging.getLogger(__name__)
+
+# TODO TEST logging https://chat.openai.com/share/4b8b6e35-47d5-4127-9193-b34a12a0d1ce
 @shared_task
 def create_order_lemmas_async(voc_id) -> None:
     try:
         vocabulary = Vocabulary.objects.get(pk=voc_id)
         if not vocabulary:
-            print(f"Vocabulary with id {voc_id} does not exist.")
+            logger.info(f"Vocabulary with id {voc_id} does not exist.")
             return None
 
         with transaction.atomic():
@@ -35,14 +38,14 @@ def create_order_lemmas_async(voc_id) -> None:
                     cur_lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value[0]})
                     # cur_lemma.save()
 
-            print(f"Finished process of create order_lemmas for {voc_id}")
+            logger.info(f"Finished process of create order_lemmas for {voc_id}")
 
     except ObjectDoesNotExist:
-        print(f"Vocabulary with id {voc_id} does not exist.")
+        logger.error(f"Vocabulary with id {voc_id} does not exist.")
     except ValueError as e:
-        print(f"Error converting {voc_id} to UUID: {e}")
+        logger.error(f"Error converting {voc_id} to UUID: {e}")
     except SoftTimeLimitExceeded:
-        print("Task time limit exceeded.")
+        logger.error("Task time limit exceeded.")
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        logger.error(f"An unexpected error occurred: {e}")
     return None

@@ -112,9 +112,9 @@ class SimVoc:
 
     @staticmethod
     def print_order_lemmas_console(lemmas_dict: dict, limit: int = 1) -> Any:
-        for lemma, extra_data in lemmas_dict.items():
-            if extra_data >= limit:
-                print(f"{lemma}: {extra_data}")
+        for lemma, frequency in lemmas_dict.items():
+            if frequency >= limit:
+                print(f"{lemma}: {frequency}")
 
     @staticmethod
     def convert_to_txt(file_obj):
