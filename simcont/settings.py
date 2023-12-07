@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'debug_toolbar',
     'rest_framework',
-    'drf_yasg', #https://drf-yasg.readthedocs.io/en/stable/index.html
+    'drf_yasg',  # https://drf-yasg.readthedocs.io/en/stable/index.html
     'users.apps.UsersConfig',
     'drf_app.apps.Drf_appConfig',
 ]
@@ -112,9 +112,6 @@ DATABASES = {
         'PORT': DATABASE_PORT,
     },
 }
-
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -189,6 +186,8 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 5,
 }
 # ***************** END DRF *****************
 
@@ -208,7 +207,7 @@ SIMPLE_JWT = {
 # ************* END SimpleJWT *************************
 
 # ************* Swagger Setting  drf-yasg*************************
-SWAGGER_SETTINGS = {"DEFAULT_AUTO_SCHEMA_CLASS":"drf_app.views.CustomAutoSchema"}  # For group endpoints by ViewSets
+SWAGGER_SETTINGS = {"DEFAULT_AUTO_SCHEMA_CLASS": "drf_app.views.CustomAutoSchema"}  # For group endpoints by ViewSets
 # ************* END Swagger*************************
 
 # ************* Celery *************************
@@ -222,8 +221,7 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # ************* END Celery *************************
 
-# ************* Any*************************
-# Setup logging level
+# ************* Logging *************************
 # LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO
 LOGGING_LEVEL = logging.INFO
 
@@ -251,9 +249,10 @@ LOGGING = {
         },
     },
 }
+# ************* END Logging *************************
 
-# ************* END Any *************************
 # ************* Any*************************
 # ************* END Any *************************
+
 # ************* Any*************************
 # ************* END Any *************************

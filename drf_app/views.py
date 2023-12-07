@@ -22,6 +22,7 @@ class CustomAutoSchema(SwaggerAutoSchema):
         return tags
 
 
+# TODO Merge branches, protect endpoints and give QS for exactly user
 class VocabularyViewSet(viewsets.ModelViewSet):
     queryset = Vocabulary.objects.all()
     serializer_class = VocabularySerializer
