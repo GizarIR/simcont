@@ -13,7 +13,7 @@ from .models import Vocabulary, Lemma
 
 logger = logging.getLogger(__name__)
 
-# TODO TEST logging https://chat.openai.com/share/4b8b6e35-47d5-4127-9193-b34a12a0d1ce
+
 @shared_task
 def create_order_lemmas_async(voc_id) -> None:
     try:
@@ -30,12 +30,12 @@ def create_order_lemmas_async(voc_id) -> None:
 
             for key, value in order_lemmas_dict.items():
                 if not Lemma.objects.filter(lemma=key).exists():
-                    new_lemma = Lemma.objects.create(lemma=key, pos=value[1])
-                    new_lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value[0]})
+                    new_lemma = Lemma.objects.create(lemma=key)
+                    new_lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value})
                     # new_lemma.save()
                 else:
                     cur_lemma = Lemma.objects.filter(lemma=key)[0]
-                    cur_lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value[0]})
+                    cur_lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value})
                     # cur_lemma.save()
 
             logger.info(f"Finished process of create order_lemmas for {voc_id}")
