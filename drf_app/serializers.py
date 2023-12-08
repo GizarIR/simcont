@@ -2,7 +2,7 @@ from drf_yasg import openapi
 from rest_framework import serializers
 from .models import Vocabulary, Lemma, Lang, VocabularyLemma
 
-from users.serializers import UserSerializer
+from users.serializers import UserSerializer, LearnerSerializer
 from users.models import CustomUser
 
 
@@ -30,7 +30,7 @@ class OrderLemmasField(serializers.JSONField):
 
 class VocabularySerializer(serializers.ModelSerializer):
     order_lemmas = OrderLemmasField(required=False, allow_null=True)
-    learners = UserSerializer(many=True, read_only=True)
+    learners = LearnerSerializer(many=True, read_only=True)
     learners_id = serializers.PrimaryKeyRelatedField(
         queryset=CustomUser.objects.all(),
         write_only=True,
