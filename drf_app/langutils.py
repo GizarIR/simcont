@@ -162,6 +162,7 @@ class SimVoc:
         # doc = nlp(source_text)
         doc = SimVoc.nlp_instance(source_text)
         unsorted_result = defaultdict(int)
+        # TODO need to TEST -  last word don't handle
         doc_len = len(doc) - 1
         if cons_mode:
             progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=100)

@@ -51,6 +51,7 @@ class VocabularySerializer(serializers.ModelSerializer):
         vocabulary.save()
         return vocabulary
 
+
 class TranslateField(serializers.JSONField):
     """
     Example:
