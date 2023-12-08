@@ -6,4 +6,5 @@ admin.site.register(Vocabulary)
 admin.site.register(Lemma)
 admin.site.register(VocabularyLemma)
 admin.site.register(Lang)
+admin.site.register(LearnerVocabulary)
 

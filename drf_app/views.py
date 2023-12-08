@@ -32,14 +32,14 @@ class VocabularyViewSet(viewsets.ModelViewSet):
     # For describe custom queryset
     # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
     # def get_queryset(self):
-    #        pk = self.kwargs.get("pk")
-    #
+    #     pk = self.kwargs.get("pk")
+    #     user = self.request.user
     #     if not pk:
-    #         return Vocabulary.objects.all()[:3]
+    #         return Vocabulary.objects.filter(user in users)
     #
-    #     return Vocabulary.objects.filter(pk=pk)
+    #     return Vocabulary.objects.filter(pk=pk and user in users)
 
-    # Custom Route for Languages model
+    # TODO Custom Route for Languages model need to independed ViewSet or deleted post methods
     # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
     @action(methods=['get', 'post'], detail=False)
     def languages(self, request):

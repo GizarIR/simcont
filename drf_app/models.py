@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from drf_app.validators import validate_json
 
 
-# from users.models import CustomUser
+from users.models import CustomUser
 
 
 class Lang(models.Model):
@@ -30,7 +30,12 @@ class Vocabulary(models.Model):
     lang_to = models.ForeignKey(Lang, related_name='voc_to', on_delete=models.CASCADE)
     order_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
     source_text = models.TextField()
-    users = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, blank=True)
+    author = models.ForeignKey("users.CustomUser", related_name='voc_author', on_delete=models.CASCADE, default=None)
+    learners = models.ManyToManyField(
+        "users.CustomUser",
+        related_name='voc_learner',
+        through="LearnerVocabulary",
+    )
 
     @property
     def order_lemmas_updated(self):
@@ -44,14 +49,23 @@ class Vocabulary(models.Model):
         order_lemmas_dict = {}
 
         for item in qs_lemmas:
-            order_lemmas_dict[item['lemma']] = item['vocabularylemma__frequency']
+            order_lemmas_dict[item['throughLemma']] = item['vocabularylemma__frequency']
 
         order_lemmas_json = json.dumps(order_lemmas_dict, ensure_ascii=False)
 
         return order_lemmas_json
 
     def __str__(self):
-        return f"{self.title}: {self.id}"
+        return f"({self.title}: {self.id})"
+
+
+class LearnerVocabulary(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    throughLearner = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE)
+    throughVocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"('{self.id}', '{self.throughLearner}', '{self.throughVocabulary}')"
 
 
 class Lemma(models.Model):
@@ -94,9 +108,9 @@ class Lemma(models.Model):
 
 class VocabularyLemma(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
-    lemma = models.ForeignKey(Lemma, on_delete=models.CASCADE)
+    throughVocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
+    throughLemma = models.ForeignKey(Lemma, on_delete=models.CASCADE)
     frequency = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"('{self.vocabulary}', '{self.lemma}', '{self.frequency}')"
+        return f"('{self.throughVocabulary}', '{self.throughLemma}', '{self.frequency}')"
