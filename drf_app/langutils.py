@@ -22,10 +22,13 @@ import spacy
 
 from tqdm import tqdm
 import uuid
+import logging
 
 from simcont import settings
 
 openai.api_key = settings.OPENAI_API_KEY
+logger = logging.getLogger(__name__)
+
 
 class PartSpeech(str, Enum):
     X = "X"  # other
@@ -117,20 +120,28 @@ class SimVoc:
                 print(f"{lemma}: {frequency}")
 
     @staticmethod
-    def convert_to_txt(file_obj):
+    def convert_to_txt(file_obj, cons_mode=False):
         """
         Support file's format:
             TXT, PDF
         """
+        logger.info(f"Func convert_to_txt starts to read file {file_obj.name}.")
         doc_txt = ""
         _, file_extension = os.path.splitext(file_obj.name)
         if file_extension.lower() == '.pdf':
             with pdfplumber.open(file_obj) as pdf:
-                for page in pdf.pages:
-                    doc_txt += page.extract_text()
+                if cons_mode:
+                    progress_bar = tqdm(total=len(pdf.pages), desc="Read pages...", unit="page", unit_scale=1)
+                    for page in pdf.pages:
+                        doc_txt += page.extract_text()
+                        progress_bar.update(1)
+                    progress_bar.close()
+                else:
+                    for page in pdf.pages:
+                        doc_txt += page.extract_text()
             return doc_txt
         elif file_extension.lower() == '.txt':
-            return str(file_obj.read())
+            return file_obj.read().decode('utf-8')
         else:
             return ""
 
@@ -138,8 +149,8 @@ class SimVoc:
     def clean_text(row_text: str) -> str:
         print(f'Cleaning punctuation marks...')
         clearing_text = re.sub(r'[^\w\s]', '', row_text)
-        print(f'Cleaning the newline characters...')
-        clearing_text = clearing_text.replace('\n', '')
+        # print(f'Cleaning the newline characters...')
+        # clearing_text = clearing_text.replace('\n', '')
         print(f'Cleaning words with numbers...')
         clearing_text = re.sub(r'\w*\d\w*', '', clearing_text)
         print(f'Cleaning words with a length of 1 character...')
@@ -162,19 +173,26 @@ class SimVoc:
         # doc = nlp(source_text)
         doc = SimVoc.nlp_instance(source_text)
         unsorted_result = defaultdict(int)
-        # TODO need to TEST -  last word don't handle
-        doc_len = len(doc) - 1
+        doc_len = len(doc)
         if cons_mode:
-            progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=100)
+            progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=1)
             for i in range(doc_len):
+
                 if not types or doc[i].pos_ in types:
-                    unsorted_result[doc[i].lemma_] += 1
+                    lemma = doc[i].lemma_.strip()
+                    if lemma and "\\" not in lemma:
+                        unsorted_result[doc[i].lemma_.lower()] += 1
+
                     progress_bar.update(1)
+                    time.sleep(0.0001)
             progress_bar.close()
         else:
             for i in range(doc_len):
+
                 if not types or doc[i].pos_ in types:
-                    unsorted_result[doc[i].lemma_] += 1
+                    lemma = doc[i].lemma_.strip()
+                    if lemma and "\\" not in lemma:
+                        unsorted_result[doc[i].lemma_.lower()] += 1
 
         order_lemmas = dict(sorted(unsorted_result.items(), key=lambda item: item[1], reverse=True))
 
@@ -249,6 +267,7 @@ class SimVoc:
 if __name__ == '__main__':
     # source_path = 'sandbox/pmbok5en.pdf'
     source_path = 'sandbox/test_article.pdf'
+    # source_path = 'sandbox/test_len_doc.pdf'
     # source_path = 'sandbox/test_speech.txt'
     current_path = os.path.abspath(__file__)
     parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
@@ -256,11 +275,11 @@ if __name__ == '__main__':
     testVoc = SimVoc()
 
     with open(file_path, 'rb') as file:
-        result = testVoc.convert_to_txt(file)
+        result = testVoc.convert_to_txt(file, cons_mode=True)
         result = testVoc.clean_text(result)
-        order_dict = testVoc.create_order_lemmas(result)
+        order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
         testVoc.print_order_lemmas_console(order_dict)
-        print(order_dict)
+        # print(order_dict)
 
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
