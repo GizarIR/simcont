@@ -172,7 +172,7 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 # For tell Django to use this backend as the default authentication backend.
 AUTHENTICATION_BACKENDS = [
-    # 'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
     'users.auth_backends.EmailBackend',
 ]
 # ************* End Auth by Email Block*************************
@@ -181,6 +181,9 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',  # TODO base authentication can switch off on Prod
+        'rest_framework.authentication.BasicAuthentication',  # TODO base authentication can switch off on Prod
+        'rest_framework.authentication.SessionAuthentication',  # TODO base authentication can switch off on Prod
     ),
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',

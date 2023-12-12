@@ -2,8 +2,9 @@ from django.shortcuts import render
 from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.utils import swagger_auto_schema
 
-from rest_framework import generics, viewsets
+from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from .models import Vocabulary, Lemma, Lang
@@ -26,20 +27,33 @@ class CustomAutoSchema(SwaggerAutoSchema):
 class VocabularyViewSet(viewsets.ModelViewSet):
     queryset = Vocabulary.objects.all()
     serializer_class = VocabularySerializer
+    permission_classes = [IsAuthenticated | IsAdminUser]
 
     my_tags = ['Vocabulary']
 
     # For describe custom queryset
     # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
-    # def get_queryset(self):
-    #     pk = self.kwargs.get("pk")
-    #     user = self.request.user
-    #     if not pk:
-    #         return Vocabulary.objects.filter(user in users)
-    #
-    #     return Vocabulary.objects.filter(pk=pk and user in users)
+    def get_queryset(self):
+        user = self.request.user
 
-    # TODO Custom Route for Languages model need to independed ViewSet or deleted post methods
+        if not user.is_authenticated:
+            return Vocabulary.objects.none()
+
+        pk = self.kwargs.get("pk")
+
+        if pk:
+            try:
+                vocabulary = Vocabulary.objects.get(pk=pk)
+                if user.is_staff or user in vocabulary.learners.all():
+                    return Vocabulary.objects.filter(pk=pk)
+                else:
+                    return Vocabulary.objects.none()
+            except Vocabulary.DoesNotExist:
+                return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Vocabulary.objects.filter(learners=user)
+
+    # TODO Custom Route for Languages model need to move in separate ViewSet or deleted post methods
     # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
     @action(methods=['get', 'post'], detail=False)
     def languages(self, request):

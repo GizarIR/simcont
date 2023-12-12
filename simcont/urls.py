@@ -54,6 +54,7 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/v1/', include(router.urls)),   # http://127.0.0.1:8000/api/v1/.../ CRUD
+    path('api/v1/drf-auth/', include('rest_framework.urls'))  # TODO base authentication can switch off on Prod
 ]
 
 
