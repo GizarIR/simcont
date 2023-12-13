@@ -70,8 +70,8 @@ class LearnerVocabulary(models.Model):
 
 class Lemma(models.Model):
     class Pos(models.TextChoices):
-        X = "X", _("Other")
-        ADJ = "ADJ", _("Adjective")
+        X = "X", _("other")
+        ADJ = "ADJ", _("adjective")
         ADP = "ADP", _("adposition")
         ADV = "ADV", _("adverb")
         AUX = "AUX", _("auxiliary")

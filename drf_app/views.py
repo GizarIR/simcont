@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import render
 from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.utils import swagger_auto_schema
@@ -7,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
-from .models import Vocabulary, Lemma, Lang
+from .models import Vocabulary, Lemma, Lang, VocabularyLemma
 from .serializers import VocabularySerializer, LemmaSerializer
 
 
@@ -23,7 +24,6 @@ class CustomAutoSchema(SwaggerAutoSchema):
         return tags
 
 
-# TODO Merge branches, protect endpoints and give QS for exactly user
 class VocabularyViewSet(viewsets.ModelViewSet):
     queryset = Vocabulary.objects.all()
     serializer_class = VocabularySerializer
@@ -85,5 +85,33 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 class LemmaViewSet(viewsets.ModelViewSet):
     queryset = Lemma.objects.all()
     serializer_class = LemmaSerializer
+    permission_classes = [IsAuthenticated | IsAdminUser]
 
     my_tags = ['Lemma']
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return Lemma.objects.none()
+
+        pk = self.kwargs.get("pk")
+
+        if pk:
+            try:
+                vocabularies_id = VocabularyLemma.objects.filter(throughLemma=pk).values('throughVocabulary')
+                vocabularies = Vocabulary.objects.filter(
+                    Q(id__in=vocabularies_id) & (Q(author=user) | Q(learners=user))
+                ).distinct()
+                if user.is_staff or vocabularies:
+                    return Lemma.objects.filter(pk=pk)
+                else:
+                    return Lemma.objects.none()
+            except Lemma.DoesNotExist:
+                return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        vocabularies = Vocabulary.objects.filter(Q(author=user) | Q(learners=user))
+        lemmas_id = VocabularyLemma.objects.filter(throughVocabulary__in=vocabularies).values('throughLemma')
+        qs_result = Lemma.objects.filter(id__in=lemmas_id)
+
+        return qs_result
