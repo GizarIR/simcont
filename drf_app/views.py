@@ -55,7 +55,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 
     # TODO Custom Route for Languages model need to move in separate ViewSet or deleted post methods
     # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
-    @action(methods=['get', 'post'], detail=False)
+    @action(methods=['get'], detail=False)
     def languages(self, request):
         """
         For end points /api/v1/vocabulary/languages/
@@ -69,7 +69,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
             } for lang in langs
         ])
 
-    @action(methods=['get', 'put'], detail=True)
+    @action(methods=['get'], detail=True)
     def language(self, request, pk=None):
         """
         For endpoints /api/v1/vocabulary/{id}/language/
@@ -93,7 +93,7 @@ class LemmaViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if not user.is_authenticated:
-            return Lemma.objects.none()
+            return Response({"detail": "You need to authorization."}, status=status.HTTP_401_UNAUTHORIZED)
 
         pk = self.kwargs.get("pk")
 
