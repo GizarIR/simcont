@@ -181,13 +181,13 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.TokenAuthentication',  # TODO base authentication can switch off on Prod
-        'rest_framework.authentication.BasicAuthentication',  # TODO base authentication can switch off on Prod
-        'rest_framework.authentication.SessionAuthentication',  # TODO base authentication can switch off on Prod
+        'rest_framework.authentication.TokenAuthentication' if DJANGO_ENV == 'DEV' else None,
+        'rest_framework.authentication.BasicAuthentication' if DJANGO_ENV == 'DEV' else None,
+        'rest_framework.authentication.SessionAuthentication' if DJANGO_ENV == 'DEV' else None,
     ),
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer' if DJANGO_ENV == 'DEV' else None,  # On/Off DRF interface
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 5,

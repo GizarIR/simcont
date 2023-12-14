@@ -53,8 +53,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 
         return Vocabulary.objects.filter(learners=user)
 
-    # TODO Custom Route for Languages model need to move in separate ViewSet or deleted post methods
-    # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
+
     @action(methods=['get'], detail=False)
     def languages(self, request):
         """
