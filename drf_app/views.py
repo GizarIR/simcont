@@ -37,7 +37,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if not user.is_authenticated:
-            return Vocabulary.objects.none()
+            return Response({"detail": "You need to authorization."}, status=status.HTTP_401_UNAUTHORIZED)
 
         pk = self.kwargs.get("pk")
 
