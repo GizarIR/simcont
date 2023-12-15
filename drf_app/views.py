@@ -31,8 +31,6 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 
     my_tags = ['Vocabulary']
 
-    # For describe custom queryset
-    # More information https://proproprogs.ru/django/drf-simplerouter-i-defaultrouter
     def get_queryset(self):
         user = self.request.user
 
@@ -114,3 +112,19 @@ class LemmaViewSet(viewsets.ModelViewSet):
         qs_result = Lemma.objects.filter(id__in=lemmas_id)
 
         return qs_result
+
+    # TODO Convert to RetrieveModelMixin using seperate serialaizer for right view by Swagger
+    @action(methods=['get'], detail=True)
+    def translate(self, request, pk=None):
+        """
+        For endpoints /api/v1/lemma/{id}/translate/
+        """
+        # TODO Added task for Celery for translate,
+        #  and expand model Lemma - add choices field Status [Start, Progress, Finish]
+        #  and may be use Strategy Translate
+        lemma = Lemma.objects.get(pk=pk)
+        return Response({
+            'id': lemma.id,
+            'lemma': lemma.lemma,
+            'translate': lemma.translate
+        })
