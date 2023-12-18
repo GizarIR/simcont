@@ -1,8 +1,8 @@
 from drf_yasg import openapi
 from rest_framework import serializers
-from .models import Vocabulary, Lemma, Lang, VocabularyLemma
+from .models import Vocabulary, Lemma, Lang
 
-from users.serializers import UserSerializer, LearnerSerializer
+from users.serializers import LearnerSerializer
 from users.models import CustomUser
 
 
