@@ -3,13 +3,14 @@ from django.shortcuts import render
 from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.utils import swagger_auto_schema
 
-from rest_framework import generics, viewsets, status
+from rest_framework import generics, viewsets, status, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from .models import Vocabulary, Lemma, Lang, VocabularyLemma
-from .serializers import VocabularySerializer, LemmaSerializer
+from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSerializer, LanguageSerializer
 
 
 class CustomAutoSchema(SwaggerAutoSchema):
@@ -51,32 +52,28 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 
         return Vocabulary.objects.filter(learners=user)
 
-
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False, serializer_class=LanguageSerializer)
     def languages(self, request):
         """
         For end points /api/v1/vocabulary/languages/
         """
         langs = Lang.objects.all()
-        return Response([
-            {
-                'id': lang.id,
-                'name': lang.name,
-                'short_name': lang.short_name
-            } for lang in langs
-        ])
+        serializer = self.get_serializer(langs, many=True)
 
-    @action(methods=['get'], detail=True)
+        return Response(serializer.data)
+
+    @action(methods=['get'], detail=True, serializer_class=LanguageSerializer)
     def language(self, request, pk=None):
         """
         For endpoints /api/v1/vocabulary/{id}/language/
         """
-        lang = Lang.objects.get(pk=pk)
-        return Response({
-            'id': lang.id,
-            'name': lang.name,
-            'short_name': lang.short_name
-        })
+        try:
+            lang = Lang.objects.get(pk=pk)
+        except Lang.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(lang)
+        return Response(serializer.data)
 
 
 class LemmaViewSet(viewsets.ModelViewSet):
@@ -113,18 +110,18 @@ class LemmaViewSet(viewsets.ModelViewSet):
 
         return qs_result
 
-    # TODO Convert to RetrieveModelMixin using seperate serialaizer for right view by Swagger
-    @action(methods=['get'], detail=True)
+    @action(methods=['get'], detail=True, serializer_class=TranslateLemmaSerializer)
     def translate(self, request, pk=None):
         """
         For endpoints /api/v1/lemma/{id}/translate/
         """
         # TODO Added task for Celery for translate,
-        #  and expand model Lemma - add choices field Status [Start, Progress, Finish]
-        #  and may be use Strategy Translate
-        lemma = Lemma.objects.get(pk=pk)
-        return Response({
-            'id': lemma.id,
-            'lemma': lemma.lemma,
-            'translate': lemma.translate
-        })
+        #  and expand model Lemma - add choices field Status [Rookie, In_Progress, Translated]
+        #  and may be use Strategy Translate https://chat.openai.com/share/1fa17b0f-7d7a-4a8e-ae09-7d6558fa3e4a
+        try:
+            lemma = Lemma.objects.get(pk=pk)
+        except Lemma.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(lemma)
+        return Response(serializer.data)

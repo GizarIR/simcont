@@ -115,3 +115,18 @@ class LemmaSerializer(serializers.ModelSerializer):
             lemma.vocabularies.add(voc.id)
         lemma.save()
         return lemma
+
+
+class TranslateLemmaSerializer(serializers.ModelSerializer):
+    translate = TranslateField()
+
+    class Meta:
+        model = Lemma
+        fields = ('id', 'lemma',  'pos', 'translate')
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Lang
+        fields = ('id', 'name', 'short_name')
