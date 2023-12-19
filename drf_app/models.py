@@ -89,6 +89,11 @@ class Lemma(models.Model):
         SPACE = "SPACE", _("space")
         VERB = "VERB", _("verb")
 
+    class TranslateStatus(models.TextChoices):
+        ROOKIE = "Rookie", _("Rookie")
+        IN_PROGRESS = "In_Progress", _("In progress")
+        TRANSLATED = "Translated", _("Translated")
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lemma = models.CharField(max_length=150)
     pos = models.CharField(
@@ -100,6 +105,11 @@ class Lemma(models.Model):
     vocabularies = models.ManyToManyField(
         Vocabulary,
         through="VocabularyLemma",
+    )
+    translate_status = models.CharField(
+        max_length=11,
+        choices=TranslateStatus.choices,
+        default=TranslateStatus.ROOKIE,
     )
 
     def __str__(self):
