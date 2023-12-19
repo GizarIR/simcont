@@ -106,7 +106,7 @@ class LemmaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lemma
-        fields = ('id', 'lemma',  'pos', 'translate', 'vocabularies', 'vocabularies_id')
+        fields = ('id', 'lemma',  'pos', 'translate', 'vocabularies', 'vocabularies_id', 'translate_status')
 
     def create(self, validated_data):
         vocabularies = validated_data.pop('vocabularies_id', None)
@@ -122,7 +122,7 @@ class TranslateLemmaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lemma
-        fields = ('id', 'lemma',  'pos', 'translate')
+        fields = ('id', 'lemma',  'pos', 'translate', 'translate_status')
 
 
 class LanguageSerializer(serializers.ModelSerializer):

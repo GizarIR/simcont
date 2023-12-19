@@ -116,7 +116,6 @@ class LemmaViewSet(viewsets.ModelViewSet):
         For endpoints /api/v1/lemma/{id}/translate/
         """
         # TODO Added task for Celery for translate,
-        #  and expand model Lemma - add choices field Status [Rookie, In_Progress, Translated]
         #  and may be use Strategy Translate https://chat.openai.com/share/1fa17b0f-7d7a-4a8e-ae09-7d6558fa3e4a
         try:
             lemma = Lemma.objects.get(pk=pk)
