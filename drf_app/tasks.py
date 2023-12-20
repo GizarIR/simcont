@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Callable
 
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -52,7 +53,7 @@ def create_order_lemmas_async(voc_id) -> None:
 
 
 @shared_task
-def translate_lemma_async(lemma_id, strategy) -> None:
+def translate_lemma_async(lemma_id, strategy, lang_to) -> None:
     try:
         lemma = Lemma.objects.get(pk=lemma_id)
         if not lemma:
@@ -60,8 +61,22 @@ def translate_lemma_async(lemma_id, strategy) -> None:
             return None
 
         with transaction.atomic():
-            #  TODO here should be code of translate with strategy
 
+            strategy_function: Callable = getattr(SimVoc, f"strategy_{strategy}", None)
+
+            if strategy_function is not None and callable(strategy_function):
+                lemma.translate_status = Lemma.TranslateStatus.IN_PROGRESS
+                lemma.save()
+
+                lemma_translated = strategy_function(lemma.lemma, lang_to)
+                lemma.translate = lemma_translated
+
+                _pos = json.loads(lemma_translated).get("main_translate", None)[3]
+                lemma.pos = _pos or lemma.pos
+
+                lemma.translate_status = Lemma.TranslateStatus.TRANSLATED
+
+                lemma.save()
             logger.info(f"Finished process of get translate for lemma: {lemma.lemma}, "
                         f"with strategy: {strategy}")
 

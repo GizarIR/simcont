@@ -121,17 +121,17 @@ class LemmaViewSet(viewsets.ModelViewSet):
         """
         For endpoints /api/v1/lemma/{id}/translate/
         """
-        # TODO Added task for Celery for translate,
-        #  and may be use Strategy Translate https://chat.openai.com/share/1fa17b0f-7d7a-4a8e-ae09-7d6558fa3e4a
         try:
             lemma = Lemma.objects.get(pk=pk)
         except Lemma.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if lemma.translate_status == Lemma.TranslateStatus.ROOKIE:
-            translate_lemma_async.apply_async(args=[lemma.pk, settings.DEFAULT_TRANSLATE_STRATEGY], countdown=5)
+            # Task for Celery
+            # TODO need to figure out where take it: LANG_TO = ru.  Possible by Education's model ?
+            translate_lemma_async.apply_async(args=[lemma.pk, settings.DEFAULT_STRATEGY_TRANSLATE, "ru"], countdown=0)
             logger.info(f"Start process of translate lemma: {lemma.lemma}, "
-                        f"with strategy: {settings.DEFAULT_TRANSLATE_STRATEGY}")
+                        f"with strategy: {settings.DEFAULT_STRATEGY_TRANSLATE}")
 
         serializer = self.get_serializer(lemma)
         return Response(serializer.data)

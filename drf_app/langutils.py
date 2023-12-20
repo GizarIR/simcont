@@ -199,7 +199,7 @@ class SimVoc:
         return order_lemmas
 
     @staticmethod
-    def get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
+    def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
         prompt_to_ai = (
             "Переведи на {} слово {} с не больше {} дополнительных значений "
             "в формате:"
@@ -232,7 +232,7 @@ class SimVoc:
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
     @staticmethod
-    def get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
+    def strategy_get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
         """
             For work well you need specific version googletrans==4.0.0-rc1
             Translate text_to_translate using FREE googletrans service
@@ -285,11 +285,11 @@ if __name__ == '__main__':
 
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
-    # translated_dict = json.loads(SimVoc.get_translate_chatgpt('orange', 'ru')) # to JSON object
+    # translated_dict = json.loads(SimVoc.strategy_get_translate_chatgpt('orange', 'ru')) # to JSON object
     # print(translated_dict)
-    # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'существительное'],
+    # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'NOUN'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
     print(f"{'*' * 15} Test GT {'*' * 15}")
-    translated_dict = json.loads(SimVoc.get_translate_gtrans("people", "ru"))  # to JSON object - dict
+    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("people", "ru"))  # to JSON object - dict
     print(translated_dict)
