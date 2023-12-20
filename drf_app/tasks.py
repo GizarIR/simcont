@@ -49,3 +49,28 @@ def create_order_lemmas_async(voc_id) -> None:
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
     return None
+
+
+@shared_task
+def translate_lemma_async(lemma_id, strategy) -> None:
+    try:
+        lemma = Lemma.objects.get(pk=lemma_id)
+        if not lemma:
+            logger.info(f"Lemma with id {lemma_id} does not exist.")
+            return None
+
+        with transaction.atomic():
+            #  TODO here should be code of translate with strategy
+
+            logger.info(f"Finished process of get translate for lemma: {lemma.lemma}, "
+                        f"with strategy: {strategy}")
+
+    except ObjectDoesNotExist:
+        logger.error(f"Lemma with id {lemma_id} does not exist.")
+    except ValueError as e:
+        logger.error(f"Error converting {lemma_id} to UUID: {e}")
+    except SoftTimeLimitExceeded:
+        logger.error("Task time limit exceeded.")
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+    return None

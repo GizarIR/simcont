@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import Q
 from django.shortcuts import render
 from drf_yasg.inspectors import SwaggerAutoSchema
@@ -9,8 +11,12 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from simcont import settings
 from .models import Vocabulary, Lemma, Lang, VocabularyLemma
 from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSerializer, LanguageSerializer
+from .tasks import translate_lemma_async
+
+logger = logging.getLogger(__name__)
 
 
 class CustomAutoSchema(SwaggerAutoSchema):
@@ -121,6 +127,11 @@ class LemmaViewSet(viewsets.ModelViewSet):
             lemma = Lemma.objects.get(pk=pk)
         except Lemma.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if lemma.translate_status == Lemma.TranslateStatus.ROOKIE:
+            translate_lemma_async.apply_async(args=[lemma.pk, settings.DEFAULT_TRANSLATE_STRATEGY], countdown=5)
+            logger.info(f"Start process of translate lemma: {lemma.lemma}, "
+                        f"with strategy: {settings.DEFAULT_TRANSLATE_STRATEGY}")
 
         serializer = self.get_serializer(lemma)
         return Response(serializer.data)

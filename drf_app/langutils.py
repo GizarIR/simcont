@@ -245,8 +245,10 @@ class SimVoc:
         translated = translator.translate(text_to_translate, dest=lang_to)
 
         # Handle text by spaCy for POS
-        nlp = spacy.load("en_core_web_sm")
-        doc = nlp(text_to_translate)
+        SimVoc.load_spacy_model()
+
+        # Process the sentence using the loaded model
+        doc = SimVoc.nlp_instance(text_to_translate)
 
         # Get POS
         pos_tags = [(token.text, token.pos_) for token in doc]
@@ -266,20 +268,20 @@ class SimVoc:
 
 if __name__ == '__main__':
     # source_path = 'sandbox/pmbok5en.pdf'
-    source_path = 'sandbox/test_article.pdf'
-    # source_path = 'sandbox/test_len_doc.pdf'
-    # source_path = 'sandbox/test_speech.txt'
-    current_path = os.path.abspath(__file__)
-    parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
-    file_path = os.path.join(parent_path, source_path)
-    testVoc = SimVoc()
-
-    with open(file_path, 'rb') as file:
-        result = testVoc.convert_to_txt(file, cons_mode=True)
-        result = testVoc.clean_text(result)
-        order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
-        testVoc.print_order_lemmas_console(order_dict)
-        # print(order_dict)
+    # source_path = 'sandbox/test_article.pdf'
+    # # source_path = 'sandbox/test_len_doc.pdf'
+    # # source_path = 'sandbox/test_speech.txt'
+    # current_path = os.path.abspath(__file__)
+    # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
+    # file_path = os.path.join(parent_path, source_path)
+    # testVoc = SimVoc()
+    #
+    # with open(file_path, 'rb') as file:
+    #     result = testVoc.convert_to_txt(file, cons_mode=True)
+    #     result = testVoc.clean_text(result)
+    #     order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
+    #     testVoc.print_order_lemmas_console(order_dict)
+    #     # print(order_dict)
 
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
@@ -288,6 +290,6 @@ if __name__ == '__main__':
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'существительное'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    # print(f"{'*' * 15} Test GT {'*' * 15}")
-    # translated_dict = json.loads(SimVoc.get_translate_gtrans("people", "ru"))  # to JSON object - dict
-    # print(translated_dict)
+    print(f"{'*' * 15} Test GT {'*' * 15}")
+    translated_dict = json.loads(SimVoc.get_translate_gtrans("people", "ru"))  # to JSON object - dict
+    print(translated_dict)
