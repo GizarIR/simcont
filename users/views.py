@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
@@ -29,6 +31,14 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 class ChangePasswordView(APIView):
     permission_classes = (IsAuthenticated,)
 
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['old_password', 'new_password'],
+        properties={
+            'old_password': openapi.Schema(type=openapi.TYPE_STRING, description='Your current password'),
+            'new_password': openapi.Schema(type=openapi.TYPE_STRING, description='Your new password'),
+        }
+    ))
     def post(self, request, *args, **kwargs):
         user = request.user
         old_password = request.data.get('old_password')

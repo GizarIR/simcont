@@ -1,6 +1,9 @@
+import os
+
 from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -36,10 +39,17 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+def upload_to(instance, filename):
+    now = timezone.now()
+    date_path = now.strftime("%Y/%m/%d")
+    filename_base, filename_ext = os.path.splitext(filename)
+    return f'avatars/{date_path}/{filename_base}_{now.strftime("%H%M%S")}{filename_ext}'
+
+
 class CustomUser(AbstractUser):
     username = None
     email = models.EmailField(_('email address'), unique=True)
-    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    avatar = models.ImageField(upload_to=upload_to, null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
