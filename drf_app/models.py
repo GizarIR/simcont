@@ -124,3 +124,17 @@ class VocabularyLemma(models.Model):
 
     def __str__(self):
         return f"('{self.throughVocabulary}', '{self.throughLemma}', '{self.frequency}')"
+
+
+# TODO need to add Education, WeekDesc, DeskLemma models
+
+class Education(models.Model):
+    pass
+
+
+class EducationLemma(models.Model):
+    pass
+
+
+class Board(models.Model):
+    pass
