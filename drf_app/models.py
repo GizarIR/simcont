@@ -68,6 +68,36 @@ class LearnerVocabulary(models.Model):
         return f"('{self.id}', '{self.throughLearner}', '{self.throughVocabulary}')"
 
 
+class Education(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    learner = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, default=None)
+    vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
+    time_create = models.DateTimeField(auto_now_add=True)
+    time_update = models.DateTimeField(auto_now=True)
+    is_finished = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"('{self.id}', '{self.learner}', '{self.vocabulary}')"
+
+
+class Board(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    education = models.ForeignKey(Education, on_delete=models.CASCADE)
+    limit_lemmas_item = models.PositiveIntegerField(default=2)
+    limit_lemmas_period = models.PositiveIntegerField(default=7)
+    set_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
+
+    # TODO func update_set_lemmas
+    def set_lemmas_update(self):
+        """
+            1) Проверяем EducationLemma на наличие New And On_Study
+            2) Если все до limit_lemmas_item * limit_lemmas_period в  On_Study то Берем из Словаря следующие
+            не выученные слова по порядку
+            3) Иначе берем On_Study + New до limit_lemmas_item * limit_lemmas_period
+        """
+        pass
+
+
 class Lemma(models.Model):
     class Pos(models.TextChoices):
         X = "X", _("other")
@@ -106,6 +136,10 @@ class Lemma(models.Model):
         Vocabulary,
         through="VocabularyLemma",
     )
+    educations = models.ManyToManyField(
+        Education,
+        through="EducationLemma",
+    )
     translate_status = models.CharField(
         max_length=11,
         choices=TranslateStatus.choices,
@@ -124,18 +158,6 @@ class VocabularyLemma(models.Model):
 
     def __str__(self):
         return f"('{self.throughVocabulary}', '{self.throughLemma}', '{self.frequency}')"
-
-
-class Education(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    learner = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, default=None)
-    vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
-    time_create = models.DateTimeField(auto_now_add=True)
-    time_update = models.DateTimeField(auto_now=True)
-    is_finished = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"('{self.id}', '{self.learner}', '{self.vocabulary}')"
 
 
 class EducationLemma(models.Model):
@@ -163,21 +185,3 @@ class EducationLemma(models.Model):
 
     def __str__(self):
         return f"('{self.throughEducation}', '{self.throughLemma}', '{self.status}')"
-
-
-class Board(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    education = models.ForeignKey(Education, on_delete=models.CASCADE)
-    limit_lemmas_item = models.PositiveIntegerField(default=2)
-    limit_lemmas_period = models.PositiveIntegerField(default=7)
-    set_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
-
-    # TODO func update_set_lemmas
-    def set_lemmas_update(self):
-        """
-            1) Проверяем EducationLemma на наличие New And On_Study
-            2) Если все до limit_lemmas_item * limit_lemmas_period в  On_Study то Берем из Словаря следующие
-            не выученные слова по порядку
-            3) Иначе берем On_Study + New до limit_lemmas_item * limit_lemmas_period
-        """
-        pass
