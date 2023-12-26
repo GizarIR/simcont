@@ -120,6 +120,7 @@ class Lemma(models.Model):
         VERB = "VERB", _("verb")
 
     class TranslateStatus(models.TextChoices):
+        # TODO update when DB will clear (as the same StatusEducation )
         ROOKIE = "Rookie", _("Rookie")
         IN_PROGRESS = "In_Progress", _("In progress")
         TRANSLATED = "Translated", _("Translated")
@@ -170,17 +171,17 @@ class EducationLemma(models.Model):
             On_Study - learned in Set,
             Learned - learned in Board
         """
-        New = "NEW", _("new")
-        On_study = "ON_STUDY", _("on_study")
-        Learned = "LEARNER", _("learned")
+        NEW = "NE", _("New")
+        ON_STUDY = "ST", _("On study")
+        LEARNED = "LE", _("Learned")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     throughEducation = models.ForeignKey(Education, on_delete=models.CASCADE)
     throughLemma = models.ForeignKey(Lemma, on_delete=models.CASCADE)
     status = models.CharField(
-        max_length=8,
+        max_length=2,
         choices=StatusEducation.choices,
-        default=StatusEducation.New,
+        default=StatusEducation.NEW,
     )
 
     def __str__(self):
