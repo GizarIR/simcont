@@ -130,3 +130,6 @@ class LanguageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lang
         fields = ('id', 'name', 'short_name')
+
+
+# TODO Serializators for Education, Board

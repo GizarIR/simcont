@@ -3,7 +3,7 @@ import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import Vocabulary
+from .models import Vocabulary, Education
 
 from .tasks import create_order_lemmas_async
 
@@ -18,3 +18,9 @@ def order_lemmas_create(sender, instance, created, **kwargs):
         create_order_lemmas_async.apply_async(args=[instance.pk], countdown=5)
         instance.save()
     return None
+
+
+# TODO signal for create Education
+@receiver(post_save, sender=Education)
+def board_create(sender, instance, created, **kwargs):
+    pass

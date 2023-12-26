@@ -126,15 +126,58 @@ class VocabularyLemma(models.Model):
         return f"('{self.throughVocabulary}', '{self.throughLemma}', '{self.frequency}')"
 
 
-# TODO need to add Education, WeekDesc, DeskLemma models
-
 class Education(models.Model):
-    pass
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    learner = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, default=None)
+    vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
+    time_create = models.DateTimeField(auto_now_add=True)
+    time_update = models.DateTimeField(auto_now=True)
+    is_finished = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"('{self.id}', '{self.learner}', '{self.vocabulary}')"
 
 
 class EducationLemma(models.Model):
-    pass
+    """
+    This model contain data about only lemmas which added to Board for study
+    """
+    class StatusEducation(models.TextChoices):
+        """
+            New - added in Set,
+            On_Study - learned in Set,
+            Learned - learned in Board
+        """
+        New = "NEW", _("new")
+        On_study = "ON_STUDY", _("on_study")
+        Learned = "LEARNER", _("learned")
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    throughEducation = models.ForeignKey(Education, on_delete=models.CASCADE)
+    throughLemma = models.ForeignKey(Lemma, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=8,
+        choices=StatusEducation.choices,
+        default=StatusEducation.New,
+    )
+
+    def __str__(self):
+        return f"('{self.throughEducation}', '{self.throughLemma}', '{self.status}')"
 
 
 class Board(models.Model):
-    pass
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    education = models.ForeignKey(Education, on_delete=models.CASCADE)
+    limit_lemmas_item = models.PositiveIntegerField(default=2)
+    limit_lemmas_period = models.PositiveIntegerField(default=7)
+    set_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
+
+    # TODO func update_set_lemmas
+    def set_lemmas_update(self):
+        """
+            1) Проверяем EducationLemma на наличие New And On_Study
+            2) Если все до limit_lemmas_item * limit_lemmas_period в  On_Study то Берем из Словаря следующие
+            не выученные слова по порядку
+            3) Иначе берем On_Study + New до limit_lemmas_item * limit_lemmas_period
+        """
+        pass
