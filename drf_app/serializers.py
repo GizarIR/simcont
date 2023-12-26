@@ -1,6 +1,6 @@
 from drf_yasg import openapi
 from rest_framework import serializers
-from .models import Vocabulary, Lemma, Lang
+from .models import Vocabulary, Lemma, Lang, Education, Board
 
 from users.serializers import LearnerSerializer
 from users.models import CustomUser
@@ -93,30 +93,6 @@ class TranslateField(serializers.JSONField):
         }
 
 
-class LemmaSerializer(serializers.ModelSerializer):
-    # For definition type of JSON field in Swagger use link:
-    # https://drf-yasg.readthedocs.io/en/stable/custom_spec.html#:~:text=class%20EmailMessageField(,%3D%20EmailMessageField()
-    vocabularies = VocabularySerializer(many=True, read_only=True)
-    vocabularies_id = serializers.PrimaryKeyRelatedField(
-        queryset=Vocabulary.objects.all(),
-        write_only=True,
-        many=True
-    )
-    translate = TranslateField()
-
-    class Meta:
-        model = Lemma
-        fields = ('id', 'lemma',  'pos', 'translate', 'vocabularies', 'vocabularies_id', 'translate_status')
-
-    def create(self, validated_data):
-        vocabularies = validated_data.pop('vocabularies_id', None)
-        lemma = Lemma.objects.create(**validated_data)
-        for voc in vocabularies:
-            lemma.vocabularies.add(voc.id)
-        lemma.save()
-        return lemma
-
-
 class TranslateLemmaSerializer(serializers.ModelSerializer):
     translate = TranslateField()
 
@@ -133,3 +109,55 @@ class LanguageSerializer(serializers.ModelSerializer):
 
 
 # TODO Serializators for Education, Board
+
+class EducationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Education
+        fields = ('id', 'learner', 'vocabulary', 'time_create', 'time_update', 'is_finished')
+
+
+class BoardSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Board
+        fields = ('id', 'education', 'limit_lemmas_item', 'limit_lemmas_period', 'set_lemmas')
+
+
+class LemmaSerializer(serializers.ModelSerializer):
+    # For definition type of JSON field in Swagger use link:
+    # https://drf-yasg.readthedocs.io/en/stable/custom_spec.html#:~:text=class%20EmailMessageField(,%3D%20EmailMessageField()
+    vocabularies = VocabularySerializer(many=True, read_only=True)
+    vocabularies_id = serializers.PrimaryKeyRelatedField(
+        queryset=Vocabulary.objects.all(),
+        write_only=True,
+        many=True
+    )
+    educations = EducationSerializer(many=True, read_only=True)
+    educations_id = serializers.PrimaryKeyRelatedField(
+        queryset=Education.objects.all(),
+        write_only=True,
+        many=True
+    )
+
+    translate = TranslateField()
+
+    class Meta:
+        model = Lemma
+        fields = (
+            'id', 'lemma', 'pos', 'translate',
+            'vocabularies', 'vocabularies_id',
+            'educations', 'educations_id',
+            'translate_status'
+        )
+
+    def create(self, validated_data):
+        vocabularies = validated_data.pop('vocabularies_id', None)
+        educations = validated_data.pop('educations_id', None)
+        lemma = Lemma.objects.create(**validated_data)
+        for voc in vocabularies:
+            lemma.vocabularies.add(voc.id)
+        for edu in educations:
+            lemma.educations.add(edu.id)
+        lemma.save()
+        return lemma

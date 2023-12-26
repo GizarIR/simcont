@@ -30,6 +30,9 @@ from drf_yasg import openapi
 router = routers.DefaultRouter()
 router.register(r'vocabulary', VocabularyViewSet)
 router.register(r'lemma', LemmaViewSet)
+router.register(r'education', EducationViewSet)
+router.register(r'board', BoardViewSet)
+
 
 # For Swagger
 schema_view = get_schema_view(

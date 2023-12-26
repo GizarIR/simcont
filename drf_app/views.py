@@ -12,8 +12,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from simcont import settings
-from .models import Vocabulary, Lemma, Lang, VocabularyLemma
-from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSerializer, LanguageSerializer
+from .models import Vocabulary, Lemma, Lang, VocabularyLemma, Education, Board
+from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSerializer, LanguageSerializer, \
+    EducationSerializer, BoardSerializer
 from .tasks import translate_lemma_async
 
 logger = logging.getLogger(__name__)
@@ -135,3 +136,20 @@ class LemmaViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(lemma)
         return Response(serializer.data)
+
+
+class EducationViewSet(viewsets.ModelViewSet):
+    queryset = Education.objects.all()
+    serializer_class = EducationSerializer
+    permission_classes = [IsAuthenticated | IsAdminUser]
+
+    my_tags = ['Education']
+
+
+class BoardViewSet(viewsets.ModelViewSet):
+    queryset = Board.objects.all()
+    serializer_class = BoardSerializer
+    permission_classes = [IsAuthenticated | IsAdminUser]
+
+    my_tags = ['Board']
+
