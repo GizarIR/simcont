@@ -1,3 +1,5 @@
+import json
+
 from drf_yasg import openapi
 from rest_framework import serializers
 from .models import Vocabulary, Lemma, Lang, Education, Board
@@ -111,10 +113,17 @@ class LanguageSerializer(serializers.ModelSerializer):
 # TODO Serializators for Education, Board
 
 class EducationSerializer(serializers.ModelSerializer):
+    list_lemmas = serializers.SerializerMethodField()
 
     class Meta:
         model = Education
-        fields = ('id', 'learner', 'vocabulary', 'time_create', 'time_update', 'is_finished')
+        fields = ('id', 'learner', 'vocabulary', 'time_create', 'time_update', 'is_finished', 'list_lemmas')
+
+    # TODO need to List Response get_list_lemmas
+    def get_list_lemmas(self, obj):
+        order_lemmas = json.loads(Vocabulary.objects.get(pk=obj.vocabulary.pk).order_lemmas_updated)
+        return list(order_lemmas.keys())
+
 
 
 class BoardSerializer(serializers.ModelSerializer):

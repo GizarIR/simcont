@@ -49,7 +49,7 @@ class Vocabulary(models.Model):
         order_lemmas_dict = {}
 
         for item in qs_lemmas:
-            order_lemmas_dict[item['throughLemma']] = item['vocabularylemma__frequency']
+            order_lemmas_dict[item['lemma']] = item['vocabularylemma__frequency']
 
         order_lemmas_json = json.dumps(order_lemmas_dict, ensure_ascii=False)
 
