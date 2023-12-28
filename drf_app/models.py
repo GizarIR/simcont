@@ -72,6 +72,8 @@ class Education(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     learner = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, default=None)
     vocabulary = models.ForeignKey(Vocabulary, on_delete=models.CASCADE)
+    limit_lemmas_item = models.PositiveIntegerField(default=2)
+    limit_lemmas_period = models.PositiveIntegerField(default=7)
     time_create = models.DateTimeField(auto_now_add=True)
     time_update = models.DateTimeField(auto_now=True)
     is_finished = models.BooleanField(default=False)
@@ -83,8 +85,6 @@ class Education(models.Model):
 class Board(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     education = models.ForeignKey(Education, on_delete=models.CASCADE)
-    limit_lemmas_item = models.PositiveIntegerField(default=2)
-    limit_lemmas_period = models.PositiveIntegerField(default=7)
     set_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
 
     # TODO func update_set_lemmas

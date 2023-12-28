@@ -115,8 +115,13 @@ class EducationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Education
-        fields = ('id', 'learner', 'vocabulary', 'time_create', 'time_update', 'is_finished', 'list_lemmas')
-
+        fields = (
+            'id', 'learner', 'vocabulary',
+            'limit_lemmas_item', 'limit_lemmas_period',
+            'time_create', 'time_update',
+            'is_finished',
+            'list_lemmas'
+        )
 
     def get_list_lemmas(self, obj):
         order_lemmas = json.loads(Vocabulary.objects.get(pk=obj.vocabulary.pk).order_lemmas_updated)
@@ -127,7 +132,7 @@ class BoardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Board
-        fields = ('id', 'education', 'limit_lemmas_item', 'limit_lemmas_period', 'set_lemmas')
+        fields = ('id', 'education', 'set_lemmas')
 
 
 class LemmaSerializer(serializers.ModelSerializer):
