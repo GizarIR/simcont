@@ -57,7 +57,10 @@ class VocabularyViewSet(viewsets.ModelViewSet):
             except Vocabulary.DoesNotExist:
                 return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        return Vocabulary.objects.filter(learners=user)
+        if user.is_staff:
+            return Vocabulary.objects.all()
+
+        return Vocabulary.objects.filter(Q(learners=user) | Q(author=user))
 
     @action(methods=['get'], detail=False, serializer_class=LanguageSerializer)
     def languages(self, request):

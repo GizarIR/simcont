@@ -110,8 +110,6 @@ class LanguageSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'short_name')
 
 
-# TODO Serializators for Education, Board
-
 class EducationSerializer(serializers.ModelSerializer):
     list_lemmas = serializers.SerializerMethodField()
 
@@ -119,11 +117,10 @@ class EducationSerializer(serializers.ModelSerializer):
         model = Education
         fields = ('id', 'learner', 'vocabulary', 'time_create', 'time_update', 'is_finished', 'list_lemmas')
 
-    # TODO need to List Response get_list_lemmas
+
     def get_list_lemmas(self, obj):
         order_lemmas = json.loads(Vocabulary.objects.get(pk=obj.vocabulary.pk).order_lemmas_updated)
         return list(order_lemmas.keys())
-
 
 
 class BoardSerializer(serializers.ModelSerializer):
