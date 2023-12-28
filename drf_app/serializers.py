@@ -124,8 +124,7 @@ class EducationSerializer(serializers.ModelSerializer):
         )
 
     def get_list_lemmas(self, obj):
-        order_lemmas = json.loads(Vocabulary.objects.get(pk=obj.vocabulary.pk).order_lemmas_updated)
-        return list(order_lemmas.keys())
+        return Education.get_list_lemmas_from_voc(obj)
 
 
 class BoardSerializer(serializers.ModelSerializer):

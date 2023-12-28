@@ -78,6 +78,11 @@ class Education(models.Model):
     time_update = models.DateTimeField(auto_now=True)
     is_finished = models.BooleanField(default=False)
 
+    @staticmethod
+    def get_list_lemmas_from_voc(education) -> list:
+        order_lemmas = json.loads(Vocabulary.objects.get(pk=education.vocabulary.pk).order_lemmas_updated)
+        return list(order_lemmas.keys())
+
     def __str__(self):
         return f"('{self.id}', '{self.learner}', '{self.vocabulary}')"
 
@@ -87,15 +92,19 @@ class Board(models.Model):
     education = models.ForeignKey(Education, on_delete=models.CASCADE)
     set_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
 
-    # TODO func update_set_lemmas
-    def set_lemmas_update(self):
+    # TODO update func update_set_lemmas
+    def update_set_lemmas(self):
         """
-            1) Проверяем EducationLemma на наличие New And On_Study
+            1) Проверяем EducationLemma на наличие New And On_Study, длину словаря
             2) Если все до limit_lemmas_item * limit_lemmas_period в  On_Study то Берем из Словаря следующие
             не выученные слова по порядку
             3) Иначе берем On_Study + New до limit_lemmas_item * limit_lemmas_period
         """
-        pass
+        set_result = {}
+        list_lemmas = Education.get_list_lemmas_from_voc(self.education)
+        for i in range(0, len(list_lemmas)-1):
+            set_result[i] = list_lemmas[i]
+        self.set_lemmas = json.dumps(set_result, ensure_ascii=False)
 
 
 class Lemma(models.Model):
