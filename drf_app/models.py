@@ -92,7 +92,7 @@ class Board(models.Model):
     education = models.ForeignKey(Education, on_delete=models.CASCADE)
     set_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
 
-    # TODO update func update_set_lemmas
+    # TODO Need update func update_set_lemmas to according with algorithm
     def update_set_lemmas(self):
         """
             1) Проверяем EducationLemma на наличие New And On_Study, длину словаря

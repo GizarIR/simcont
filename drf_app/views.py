@@ -2,6 +2,7 @@ import logging
 
 from django.db.models import Q
 from django.shortcuts import render
+from drf_yasg import openapi
 from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.utils import swagger_auto_schema
 
@@ -121,6 +122,14 @@ class LemmaViewSet(viewsets.ModelViewSet):
         return qs_result
 
     @action(methods=['get'], detail=True, serializer_class=TranslateLemmaSerializer)
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter(
+            'lang_to',
+            openapi.IN_QUERY,
+            description="Language code to translate to, default = ru",
+            type=openapi.TYPE_STRING
+        ),
+    ])
     def translate(self, request, pk=None):
         """
         For endpoints /api/v1/lemma/{id}/translate/
@@ -130,10 +139,15 @@ class LemmaViewSet(viewsets.ModelViewSet):
         except Lemma.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        lang_to = request.query_params.get('lang_to', 'ru')
+
         if lemma.translate_status == Lemma.TranslateStatus.ROOKIE:
             # Task for Celery
             # TODO need to figure out where take it: LANG_TO = ru.  Possible by Education's model ?
-            translate_lemma_async.apply_async(args=[lemma.pk, settings.DEFAULT_STRATEGY_TRANSLATE, "ru"], countdown=0)
+            translate_lemma_async.apply_async(
+                args=[lemma.pk, settings.DEFAULT_STRATEGY_TRANSLATE, lang_to],
+                countdown=0
+            )
             logger.info(f"Start process of translate lemma: {lemma.lemma}, "
                         f"with strategy: {settings.DEFAULT_STRATEGY_TRANSLATE}")
 
