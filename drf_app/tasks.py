@@ -1,5 +1,4 @@
 import json
-import logging
 from typing import Callable
 
 from celery import shared_task
@@ -11,7 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from .langutils import SimVoc
 from .models import Vocabulary, Lemma
 
-
+import logging
 logger = logging.getLogger(__name__)
 
 

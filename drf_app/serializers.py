@@ -12,10 +12,10 @@ class OrderLemmasField(serializers.JSONField):
     """
     Example:
     {
-        "lemma_1": 100,
-        "lemma_2": 58,
+        "lemma_1": 100
+        "lemma_2": 58
         ...
-        "lemma_N": 1,
+        "lemma_N": 1
     }
     """
     class Meta:

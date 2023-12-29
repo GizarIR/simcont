@@ -143,7 +143,6 @@ class LemmaViewSet(viewsets.ModelViewSet):
 
         if lemma.translate_status == Lemma.TranslateStatus.ROOKIE:
             # Task for Celery
-            # TODO need to figure out where take it: LANG_TO = ru.  Possible by Education's model ?
             translate_lemma_async.apply_async(
                 args=[lemma.pk, settings.DEFAULT_STRATEGY_TRANSLATE, lang_to],
                 countdown=0
@@ -169,4 +168,3 @@ class BoardViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated | IsAdminUser]
 
     my_tags = ['Board']
-

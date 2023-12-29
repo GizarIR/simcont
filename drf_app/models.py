@@ -2,12 +2,13 @@ import json
 import uuid
 
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from drf_app.validators import validate_json
 
-
-from users.models import CustomUser
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Lang(models.Model):
@@ -43,14 +44,16 @@ class Vocabulary(models.Model):
             vocabularies=self
         ).values(
             'lemma',
-            'vocabularylemma__frequency'
+            'vocabularylemma__frequency',
+            'id'
         ).order_by('-vocabularylemma__frequency')
 
         order_lemmas_dict = {}
 
         for item in qs_lemmas:
-            order_lemmas_dict[item['lemma']] = item['vocabularylemma__frequency']
+            order_lemmas_dict[item['lemma']] = [item['vocabularylemma__frequency'], str(item['id'])]
 
+        logger.info(f"ORDER_LEMMAS_DICT: {order_lemmas_dict}")
         order_lemmas_json = json.dumps(order_lemmas_dict, ensure_ascii=False)
 
         return order_lemmas_json
@@ -83,6 +86,11 @@ class Education(models.Model):
         order_lemmas = json.loads(Vocabulary.objects.get(pk=education.vocabulary.pk).order_lemmas_updated)
         return list(order_lemmas.keys())
 
+    @staticmethod
+    def get_list_id_lemmas_from_voc(education) -> list:
+        order_lemmas = json.loads(Vocabulary.objects.get(pk=education.vocabulary.pk).order_lemmas_updated)
+        return [item[1] for item in list(order_lemmas.values())]
+
     def __str__(self):
         return f"('{self.id}', '{self.learner}', '{self.vocabulary}')"
 
@@ -101,10 +109,41 @@ class Board(models.Model):
             3) Иначе берем On_Study + New до limit_lemmas_item * limit_lemmas_period
         """
         set_result = {}
-        list_lemmas = Education.get_list_lemmas_from_voc(self.education)
-        for i in range(0, len(list_lemmas)-1):
-            set_result[i] = list_lemmas[i]
+        education_instance = self.education
+        lemmas_per_day = education_instance.limit_lemmas_item
+        days_of_education = education_instance.limit_lemmas_period
+        limits = lemmas_per_day * days_of_education
+        list_id_lemmas = Education.get_list_id_lemmas_from_voc(education_instance)
+        # list_lemmas = Education.get_list_lemmas_from_voc(education_instance)
+        # len_vocabulary = len(education_instance.vocabulary.order_lemmas_updated)
+        qs_lemmas_on_study = EducationLemma.objects.filter(
+            Q(throughEducation=education_instance.pk) &
+            (Q(status=EducationLemma.StatusEducation.NEW) | Q(status=EducationLemma.StatusEducation.ON_STUDY))
+        )
+
+        if not len(list_id_lemmas):
+            return None
+
+        if len(qs_lemmas_on_study) == 0:
+            if len(list_id_lemmas) >= limits:
+                days_counted = days_of_education
+            else:
+                days_counted = len(list_id_lemmas) // lemmas_per_day + (len(list_id_lemmas) % lemmas_per_day > 0)
+
+            for day in range(1, days_counted + 1):
+                set_result[day] = [
+                    list_id_lemmas.pop(0) for i in range(min(len(list_id_lemmas), lemmas_per_day))
+                ]
+
+        if len(qs_lemmas_on_study) < limits:
+            pass
+
+        if len(qs_lemmas_on_study) == limits:
+            pass
+
         self.set_lemmas = json.dumps(set_result, ensure_ascii=False)
+
+        list_id_lemmas.clear()
 
 
 class Lemma(models.Model):
