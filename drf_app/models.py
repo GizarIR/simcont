@@ -53,7 +53,6 @@ class Vocabulary(models.Model):
         for item in qs_lemmas:
             order_lemmas_dict[item['lemma']] = [item['vocabularylemma__frequency'], str(item['id'])]
 
-        logger.info(f"ORDER_LEMMAS_DICT: {order_lemmas_dict}")
         order_lemmas_json = json.dumps(order_lemmas_dict, ensure_ascii=False)
 
         return order_lemmas_json
@@ -135,11 +134,11 @@ class Board(models.Model):
                     list_id_lemmas.pop(0) for i in range(min(len(list_id_lemmas), lemmas_per_day))
                 ]
 
+
         if len(qs_lemmas_on_study) < limits:
             pass
 
-        if len(qs_lemmas_on_study) == limits:
-            pass
+
 
         self.set_lemmas = json.dumps(set_result, ensure_ascii=False)
 
