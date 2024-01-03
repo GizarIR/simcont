@@ -3,6 +3,7 @@ import uuid
 
 from django.db import models
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 
 from drf_app.validators import validate_json
@@ -102,22 +103,25 @@ class Board(models.Model):
 
     def get_set_lemmas(self, next_lemmas: list = None) -> dict:
         result = {}
+        education = get_object_or_404(Education, pk=self.education.pk)
         if next_lemmas:
             for lemma in next_lemmas:
                 EducationLemma.objects.create(
-                    throughEducation=self.education,
+                    throughEducation=education,
                     throughLemma=Lemma.objects.get(pk=lemma),
                     status=EducationLemma.StatusEducation.NEW
                 )
 
-        list_edu_ns_updated = list(EducationLemma.objects.filter(
-            Q(throughEducation=self.education.pk) &
+        list_edu_ns_upd = list(EducationLemma.objects.filter(
+            Q(throughEducation=education.pk) &
             (Q(status=EducationLemma.StatusEducation.NEW) | Q(status=EducationLemma.StatusEducation.ON_STUDY))
         ).values_list('throughLemma', flat=True))
 
-        for day in range(1, self.education.limit_lemmas_period + 1):
+        logger.info([Lemma.objects.get(pk=lemma_id) for lemma_id in list_edu_ns_upd])
+
+        for day in range(1, education.limit_lemmas_period + 1):
             result[day] = [
-                list_edu_ns_updated.pop(0) if len(list_edu_ns_updated) else None for _ in range(self.education.limit_per_day)
+                str(list_edu_ns_upd.pop(0)) if len(list_edu_ns_upd) else None for _ in range(education.limit_lemmas_item)
             ]
 
         return result
@@ -135,12 +139,13 @@ class Board(models.Model):
         """
         set_result = {}
         next_lemmas = []
-        education_instance = self.education
-        lemmas_per_day = education_instance.limit_lemmas_item
-        days_of_education = education_instance.limit_lemmas_period
-        limits = lemmas_per_day * days_of_education
+        education_instance = get_object_or_404(Education, pk=self.education.pk)
+        limits = education_instance.limit_lemmas_item * education_instance.limit_lemmas_period
         list_voc = Education.get_list_id_lemmas_from_voc(education_instance)
         # list_lemmas = Education.get_list_lemmas_from_voc(education_instance)
+
+        if not len(list_voc):
+            return None
 
         qs_lemmas_education = EducationLemma.objects.filter(
             throughEducation=education_instance.pk
@@ -153,75 +158,29 @@ class Board(models.Model):
         ).values_list('throughLemma', flat=True)
         list_edu_ns = [str(item) for item in qs_lemmas_on_study]
 
-        if not len(list_voc):
-            return None
-
         if len(list_edu_ns) >= limits:
             set_result = self.get_set_lemmas()
         elif len(list_voc) > len(list_edu_nsl):
             next_lemmas = []
             need_lemmas = limits - len(list_edu_ns)
             # for all versions python
-            # next_lemmas = [item for item in list_voc if item not in list_edu_nsl][:need_lemmas]
+            next_lemmas = [item for item in list_voc if item not in list_edu_nsl][:need_lemmas]
 
             # only for more than python3.7 work faster (keep order items in list)
-            next_lemmas = list(set(list_voc)-set(list_edu_nsl))[:need_lemmas]
+            # next_lemmas = list(set(list_voc)-set(list_edu_nsl))[:need_lemmas]
             set_result = self.get_set_lemmas(next_lemmas)
         else:
             set_result = self.get_set_lemmas()
-
-        # if len(qs_lemmas_on_study) == 0:
-        #     if len(list_voc) >= limits:
-        #         days_counted = days_of_education
-        #         next_lemmas = list_voc[:limits]
-        #     else:
-        #         days_counted = len(list_voc) // lemmas_per_day + (len(list_voc) % lemmas_per_day > 0)
-        #         next_lemmas = list_voc
-        #
-        #     for lemma in next_lemmas:
-        #         EducationLemma.objects.create(
-        #             throughEducation=education_instance,
-        #             throughLemma=Lemma.objects.get(pk=lemma),
-        #             status=EducationLemma.StatusEducation.NEW
-        #         )
-        #
-        #     for day in range(1, days_counted + 1):
-        #         set_result[day] = [
-        #             next_lemmas.pop(0) if len(next_lemmas) else None for _ in range(min(len(next_lemmas), lemmas_per_day))
-        #         ]
-        # elif len(qs_lemmas_on_study) < limits:
-        #     need_lemmas = limits - len(qs_lemmas_on_study)
-        #
-        #     qs_lemmas_education_str = [str(item) for item in qs_lemmas_education]
-        #
-        #     # for all versions python
-        #     # next_lemmas = [item for item in list_voc if item not in list(qs_lemmas_education_str)][:need_lemmas]
-        #
-        #     # only for more than python3.7 work faster (save order items in list)
-        #     next_lemmas = list(set(list_voc)-set(list(qs_lemmas_education_str)))[:need_lemmas]
-        #
-        #     for lemma in next_lemmas:
-        #         EducationLemma.objects.create(
-        #             throughEducation=education_instance,
-        #             throughLemma=Lemma.objects.get(lemma),
-        #             status=EducationLemma.StatusEducation.NEW
-        #         )
-        #
-        #     qs_lemmas_on_study = list(EducationLemma.objects.filter(
-        #         Q(throughEducation=education_instance.pk) &
-        #         (Q(status=EducationLemma.StatusEducation.NEW) | Q(status=EducationLemma.StatusEducation.ON_STUDY))
-        #     ).values_list('throughLemma', flat=True))
-        #
-        #     for day in range(1, days_of_education+1):
-        #         set_result[day] = [
-        #             qs_lemmas_on_study.pop(0) if len(qs_lemmas_on_study) else None for _ in range(lemmas_per_day)
-        #         ]
 
         self.set_lemmas = json.dumps(set_result, ensure_ascii=False)
 
         next_lemmas.clear()
         list_voc.clear()
+        list_edu_nsl.clear()
+        list_edu_ns.clear()
         set_result.clear()
+
+        return None
 
 
 class Lemma(models.Model):
