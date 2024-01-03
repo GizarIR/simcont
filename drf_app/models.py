@@ -81,7 +81,6 @@ class Education(models.Model):
     time_update = models.DateTimeField(auto_now=True)
     is_finished = models.BooleanField(default=False)
 
-
     @staticmethod
     def get_list_lemmas_from_voc(education) -> list:
         order_lemmas = json.loads(Vocabulary.objects.get(pk=education.vocabulary.pk).order_lemmas_updated)
@@ -101,7 +100,12 @@ class Board(models.Model):
     education = models.ForeignKey(Education, on_delete=models.CASCADE)
     set_lemmas = models.JSONField(null=True, blank=True, validators=[validate_json], default=None)
 
-    def get_set_lemmas(self, next_lemmas: list = None) -> dict:
+    def get_set_lemmas_dict(self, next_lemmas: list = None) -> dict:
+        """
+            Get new set_lemmas dictionary for education.
+            Params:
+            *next_lemmas: lemma's id which need to add in board
+        """
         result = {}
         education = get_object_or_404(Education, pk=self.education.pk)
         if next_lemmas:
@@ -126,23 +130,15 @@ class Board(models.Model):
 
         return result
 
-    # TODO Need update func update_set_lemmas to according with algorithm
     def update_set_lemmas(self):
         """
-            1) Проверяем EducationLemma на наличие New And On_Study, длину словаря
-            2) Если все до limit_lemmas_item * limit_lemmas_period в  On_Study то Берем из Словаря следующие
-            не выученные слова по порядку,
-            2.1) Как понять какиеЖ переводим все в множества, берем левый джоин, дальше пробегаемся
-            по списку полученному из словаря order_lemmas_updated и удаляем те что выучены оставшиеся
-            по порядку в списке добавляем в обучение
-            3) Иначе берем On_Study + New до limit_lemmas_item * limit_lemmas_period
+           Update set_lemmas field in Board model
         """
         set_result = {}
         next_lemmas = []
         education_instance = get_object_or_404(Education, pk=self.education.pk)
         limits = education_instance.limit_lemmas_item * education_instance.limit_lemmas_period
         list_voc = Education.get_list_id_lemmas_from_voc(education_instance)
-        # list_lemmas = Education.get_list_lemmas_from_voc(education_instance)
 
         if not len(list_voc):
             return None
@@ -159,7 +155,7 @@ class Board(models.Model):
         list_edu_ns = [str(item) for item in qs_lemmas_on_study]
 
         if len(list_edu_ns) >= limits:
-            set_result = self.get_set_lemmas()
+            set_result = self.get_set_lemmas_dict()
         elif len(list_voc) > len(list_edu_nsl):
             next_lemmas = []
             need_lemmas = limits - len(list_edu_ns)
@@ -168,9 +164,9 @@ class Board(models.Model):
 
             # only for more than python3.7 work faster (keep order items in list)
             # next_lemmas = list(set(list_voc)-set(list_edu_nsl))[:need_lemmas]
-            set_result = self.get_set_lemmas(next_lemmas)
+            set_result = self.get_set_lemmas_dict(next_lemmas)
         else:
-            set_result = self.get_set_lemmas()
+            set_result = self.get_set_lemmas_dict()
 
         self.set_lemmas = json.dumps(set_result, ensure_ascii=False)
 

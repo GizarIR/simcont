@@ -153,7 +153,7 @@ class LemmaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(lemma)
         return Response(serializer.data)
 
-
+# TODO need add get_queryset for user for Education
 class EducationViewSet(viewsets.ModelViewSet):
     queryset = Education.objects.all()
     serializer_class = EducationSerializer
@@ -162,9 +162,25 @@ class EducationViewSet(viewsets.ModelViewSet):
     my_tags = ['Education']
 
 
+# TODO need add get_queryset for user for Board
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
     permission_classes = [IsAuthenticated | IsAdminUser]
 
     my_tags = ['Board']
+
+    @action(methods=['get'], detail=True, serializer_class=BoardSerializer)
+    def update_set_lemmas(self, request, pk=None):
+        """
+        For endpoints /api/v1/board/{id}/update_set_lemmas/
+        """
+        try:
+            board = Board.objects.get(pk=pk)
+        except Lemma.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        board.update_set_lemmas()
+
+        serializer = self.get_serializer(board)
+        return Response(serializer.data)
