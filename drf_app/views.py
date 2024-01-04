@@ -154,7 +154,6 @@ class LemmaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-# TODO need add get_queryset for user for Education
 class EducationViewSet(viewsets.ModelViewSet):
     queryset = Education.objects.all()
     serializer_class = EducationSerializer
@@ -162,8 +161,30 @@ class EducationViewSet(viewsets.ModelViewSet):
 
     my_tags = ['Education']
 
+    def get_queryset(self):
+        user = self.request.user
 
-# TODO need add get_queryset for user for Board
+        if not user.is_authenticated:
+            return Response({"detail": "You need to authorization."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        pk = self.kwargs.get("pk")
+
+        if pk:
+            try:
+                education = Education.objects.get(pk=pk)
+                if user.is_staff or user == education.learner:
+                    return Education.objects.filter(pk=pk)
+                else:
+                    return Education.objects.none()
+            except Education.DoesNotExist:
+                return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_staff:
+            return Education.objects.all()
+
+        return Education.objects.filter(learner=user)
+
+
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()
     serializer_class = BoardSerializer
@@ -171,10 +192,34 @@ class BoardViewSet(viewsets.ModelViewSet):
 
     my_tags = ['Board']
 
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return Response({"detail": "You need to authorization."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        pk = self.kwargs.get("pk")
+
+        if pk:
+            try:
+                board = Board.objects.get(pk=pk)
+                education = Education.objects.get(pk=board.education)
+                if user.is_staff or user == education.learner:
+                    return Board.objects.filter(pk=pk)
+                else:
+                    return Board.objects.none()
+            except Board.DoesNotExist:
+                return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_staff:
+            return Board.objects.all()
+
+        return Board.objects.filter(education__in=Education.objects.filter(learner=user).values('id'))
+
     @action(methods=['get'], detail=True, serializer_class=BoardSerializer)
     def update_set_lemmas(self, request, pk=None):
         """
-        For endpoints /api/v1/board/{id}/update_set_lemmas/
+            Update set of lemmas for exactly board
         """
         try:
             board = Board.objects.get(pk=pk)
@@ -198,7 +243,7 @@ class BoardViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=True, serializer_class=EducationLemmaSerializer)
     def get_study_status(self, request, pk=None):
         """
-            For endpoints /api/v1/board/{id}/get_study_status/
+            Get lemma's study status for exactly education's board
         """
         try:
             board = Board.objects.get(pk=pk)
@@ -248,7 +293,7 @@ class BoardViewSet(viewsets.ModelViewSet):
     @action(methods=['patch'], detail=True, serializer_class=EducationLemmaSerializer)
     def set_study_status(self, request, pk=None):
         """
-            For endpoints /api/v1/board/{id}/set_study_status/
+            Update lemma's study status for exactly education's board
         """
         try:
             board = Board.objects.get(pk=pk)
