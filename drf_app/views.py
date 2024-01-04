@@ -186,6 +186,43 @@ class BoardViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(board)
         return Response(serializer.data)
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter(
+            'id_lemma',
+            openapi.IN_QUERY,
+            description="UUID ID lemma",
+            type=openapi.TYPE_STRING,
+            required=True,
+        ),
+    ])
+    @action(methods=['get'], detail=True, serializer_class=EducationLemmaSerializer)
+    def get_study_status(self, request, pk=None):
+        """
+            For endpoints /api/v1/board/{id}/get_study_status/
+        """
+        try:
+            board = Board.objects.get(pk=pk)
+        except Board.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        education = board.education
+
+        id_lemma_value = request.query_params.get('id_lemma', '')
+
+        if id_lemma_value is None:
+            return Response({"detail": "'id_lemma' are required."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        qs_lemma_for_edu = EducationLemma.objects.filter(Q(throughLemma=id_lemma_value) & Q(throughEducation=education))
+
+        if not qs_lemma_for_edu:
+            return Response({"detail": "Not found Lemma for exactly Education."}, status=status.HTTP_400_BAD_REQUEST)
+
+        lemma = qs_lemma_for_edu[0]
+
+        serializer = self.get_serializer(lemma)
+        return Response(serializer.data)
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type='object',
@@ -210,6 +247,9 @@ class BoardViewSet(viewsets.ModelViewSet):
     )
     @action(methods=['patch'], detail=True, serializer_class=EducationLemmaSerializer)
     def set_study_status(self, request, pk=None):
+        """
+            For endpoints /api/v1/board/{id}/set_study_status/
+        """
         try:
             board = Board.objects.get(pk=pk)
         except Board.DoesNotExist:
