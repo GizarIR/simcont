@@ -13,9 +13,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from simcont import settings
-from .models import Vocabulary, Lemma, Lang, VocabularyLemma, Education, Board
+from .models import Vocabulary, Lemma, Lang, VocabularyLemma, Education, Board, EducationLemma
 from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSerializer, LanguageSerializer, \
-    EducationSerializer, BoardSerializer
+    EducationSerializer, BoardSerializer, EducationLemmaSerializer
 from .tasks import translate_lemma_async
 
 logger = logging.getLogger(__name__)
@@ -153,6 +153,7 @@ class LemmaViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(lemma)
         return Response(serializer.data)
 
+
 # TODO need add get_queryset for user for Education
 class EducationViewSet(viewsets.ModelViewSet):
     queryset = Education.objects.all()
@@ -177,10 +178,65 @@ class BoardViewSet(viewsets.ModelViewSet):
         """
         try:
             board = Board.objects.get(pk=pk)
-        except Lemma.DoesNotExist:
+        except Board.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         board.update_set_lemmas()
 
         serializer = self.get_serializer(board)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type='object',
+            properties={
+                'status': openapi.Schema(
+                    type='string',
+                    enum=['NE', 'ST', 'LE'],
+                    description='The status value (choose one of the enum values NE - New, ST - On_Study, LE - Learned)'
+                ),
+                'id_lemma': openapi.Schema(
+                    type='string',
+                    description='The UUID ID_lemma value'
+                ),
+            },
+            required=['status', 'id_lemma']
+        ),
+        responses={
+            200: BoardSerializer(),
+            400: 'Bad Request',
+            404: 'Not Found'
+        }
+    )
+    @action(methods=['patch'], detail=True, serializer_class=EducationLemmaSerializer)
+    def set_study_status(self, request, pk=None):
+        try:
+            board = Board.objects.get(pk=pk)
+        except Board.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        education = board.education
+
+        status_value = request.data.get('status')
+        id_lemma_value = request.data.get('id_lemma')
+
+        qs_lemma_for_edu = EducationLemma.objects.filter(Q(throughLemma=id_lemma_value) & Q(throughEducation=education))
+        if not qs_lemma_for_edu:
+            return Response({"detail": "Not found Lemma for exactly Education."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if status_value is None or id_lemma_value is None:
+            return Response({"detail": "Both 'status' and 'id_lemma' are required in the request body."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        choices = [choice for choice in EducationLemma.StatusEducation]
+        logger.info(choices)
+
+        if status_value not in [choice for choice in EducationLemma.StatusEducation]:
+            return Response({"detail": "Invalid value for 'status'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        lemma = qs_lemma_for_edu[0]
+        lemma.status = status_value
+        lemma.save()
+
+        serializer = self.get_serializer(lemma)
         return Response(serializer.data)

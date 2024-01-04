@@ -104,7 +104,7 @@ class Board(models.Model):
         """
             Get new set_lemmas dictionary for education.
             Params:
-            *next_lemmas: lemma's id which need to add in board
+            *next_lemmas: list lemma's id which need to add in board
         """
         result = {}
         education = get_object_or_404(Education, pk=self.education.pk)
@@ -170,11 +170,11 @@ class Board(models.Model):
 
         self.set_lemmas = json.dumps(set_result, ensure_ascii=False)
 
-        next_lemmas.clear()
-        list_voc.clear()
-        list_edu_nsl.clear()
-        list_edu_ns.clear()
-        set_result.clear()
+        # next_lemmas.clear()
+        # list_voc.clear()
+        # list_edu_nsl.clear()
+        # list_edu_ns.clear()
+        # set_result.clear()
 
         return None
 
