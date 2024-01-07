@@ -9,8 +9,6 @@ from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .tasks import send_activation_email
-
-# from ..serializers.user import UserSerializer, TokenObtainPairSerializer
 from .serializers import UserSerializer, TokenObtainPairSerializer, UserProfileSerializer
 
 

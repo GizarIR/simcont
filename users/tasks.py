@@ -1,7 +1,5 @@
 from celery import shared_task
 from django.core.mail import send_mail
-from django.utils.crypto import get_random_string
-from django.utils import timezone
 from .models import CustomUser
 from simcont import settings
 
