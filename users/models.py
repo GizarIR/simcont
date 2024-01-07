@@ -4,6 +4,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 
 
@@ -51,10 +52,23 @@ class CustomUser(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     avatar = models.ImageField(upload_to=upload_to, null=True, blank=True)
 
+    is_active = models.BooleanField(default=False)
+    activation_code = models.CharField(max_length=6, blank=True, null=True)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
+
+    @staticmethod
+    def generate_activation_code():
+        return get_random_string(length=6)
+
+    def save(self, *args, **kwargs):
+        if not self.id and not self.activation_code:
+            self.activation_code = self.generate_activation_code()
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email

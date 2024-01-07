@@ -1,13 +1,14 @@
 from django.contrib.auth import get_user_model
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from .tasks import send_activation_email
 
 # from ..serializers.user import UserSerializer, TokenObtainPairSerializer
 from .serializers import UserSerializer, TokenObtainPairSerializer, UserProfileSerializer
@@ -19,9 +20,47 @@ class RegisterView(APIView):
     def post(self, *args, **kwargs):
         serializer = UserSerializer(data=self.request.data)
         if serializer.is_valid():
-            get_user_model().objects.create_user(**serializer.validated_data)
+            user = get_user_model().objects.create_user(**serializer.validated_data)
+
+            send_activation_email.delay(user.id)
+
             return Response(status=HTTP_201_CREATED)
         return Response(status=HTTP_400_BAD_REQUEST, data={'errors': serializer.errors})
+
+
+class UserActivationView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['activation_code'],
+            properties={
+                'activation_code': openapi.Schema(type=openapi.TYPE_STRING, description='User activation code'),
+            }
+        ),
+        responses={
+            200: 'User successfully activated',
+            400: 'Error in request',
+            404: 'User not found or already activated',
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        activation_code = request.data.get('activation_code', None)
+        if not activation_code:
+            return Response({'error': 'Activation code not provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = get_user_model().objects.get(activation_code=activation_code, is_active=False)
+        except get_user_model().DoesNotExist:
+            return Response(
+                {'error': 'The user with the specified activation code was not found or is already activated'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        user.is_active = True
+        user.activation_code = None
+        user.save()
+
+        return Response({'message': 'User successfully activated'}, status=status.HTTP_200_OK)
 
 
 class EmailTokenObtainPairView(TokenObtainPairView):

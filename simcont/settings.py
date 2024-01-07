@@ -35,6 +35,11 @@ OPENAI_API_KEY = config('OPENAI_API_KEY')
 
 REDIS_PORT = config('REDIS_PORT')
 
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+PASSWORD_EMAIL = config('PASSWORD_EMAIL')
+EMAIL_FROM = config('EMAIL_FROM')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -222,6 +227,8 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 CELERY_TIMEZONE = 'UTC'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CELERY_EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # ************* END Celery *************************
 
 # ************* Logging *************************
@@ -254,8 +261,18 @@ LOGGING = {
 }
 # ************* END Logging *************************
 
-# ************* Any*************************
-# ************* END Any *************************
+# ************* Any EMAIL *************************
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'celery_email.backends.CeleryEmailBackend'
+EMAIL_HOST = EMAIL_HOST
+EMAIL_PORT = 465
+EMAIL_HOST_USER = EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = PASSWORD_EMAIL
+EMAIL_USE_SSL = True
+# ************* END EMAIL *************************
 
 # ************* Any*************************
 # ************* END Any *************************
