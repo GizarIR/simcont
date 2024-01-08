@@ -14,6 +14,9 @@ from googletrans import Translator, LANGUAGES
 # https://platform.openai.com/docs/quickstart?context=python
 import openai
 
+# https://github.com/xtekky/gpt4free?tab=readme-ov-file#-getting-started
+import g4f
+
 # https://spacy.io/usage
 import spacy
 
@@ -232,6 +235,44 @@ class SimVoc:
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
     @staticmethod
+    def strategy_get_translate_g4f(text_to_translate: str, lang_to: str, num: int = 1) -> str:
+        # g4f.debug.logging = True  # Enable debug logging
+        g4f.debug.version_check = False  # Disable automatic version checking
+        # print(g4f.Provider.Bing.params)  # Print supported args for Bing
+        prompt_to_ai = (
+            "Переведи на {} слово {} с не больше {} дополнительных значений "
+            "в формате:"
+            "{{"
+            "\"main_translate\": [ \"{}\", \"произношение\", \"перевод\", \"часть речи в UP Tags\"],"
+            "\"extra_data\": [[ \"{}\", \"перевод\", \"часть речи\"], ...]"
+            "}}"
+        )
+
+        response = g4f.ChatCompletion.create(
+            model=g4f.models.gpt_4,
+            messages=[
+                {"role": "user",
+                 "content": prompt_to_ai.format(
+                     LANGUAGES[lang_to],
+                     text_to_translate,
+                     str(num),
+                     text_to_translate,
+                     text_to_translate,
+                     )
+                 }
+            ],
+        )
+
+        response = response.strip()
+        response_str = response[response.find('main_translate')-2:response.find('}')+1]
+        response_str = response_str.replace('\n', '')
+        print(response_str)
+        response_data = json.loads(response_str)
+        response_data["user_inf"] = []
+        return json.dumps(response_data, ensure_ascii=False)  # JSON string
+
+
+    @staticmethod
     def strategy_get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
         """
             For work well you need specific version googletrans==4.0.0-rc1
@@ -283,13 +324,16 @@ if __name__ == '__main__':
     #     testVoc.print_order_lemmas_console(order_dict)
     #     # print(order_dict)
 
-
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
     # translated_dict = json.loads(SimVoc.strategy_get_translate_chatgpt('orange', 'ru')) # to JSON object
     # print(translated_dict)
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'NOUN'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    print(f"{'*' * 15} Test GT {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("people", "ru"))  # to JSON object - dict
+    # print(f"{'*' * 15} Test GT {'*' * 15}")
+    # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("people", "ru"))  # to JSON object - dict
+    # print(translated_dict)
+
+    print(f"{'*' * 15} Test G4F {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("people", "ru", 3))  # to JSON object - dict
     print(translated_dict)
