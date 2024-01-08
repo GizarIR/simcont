@@ -66,7 +66,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False, serializer_class=LanguageSerializer)
     def languages(self, request):
         """
-        For end points /api/v1/vocabulary/languages/
+        Get available languages.
         """
         langs = Lang.objects.all()
         serializer = self.get_serializer(langs, many=True)
@@ -76,7 +76,7 @@ class VocabularyViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=True, serializer_class=LanguageSerializer)
     def language(self, request, pk=None):
         """
-        For endpoints /api/v1/vocabulary/{id}/language/
+        Get language by id.
         """
         try:
             lang = Lang.objects.get(pk=pk)
@@ -132,7 +132,9 @@ class LemmaViewSet(viewsets.ModelViewSet):
     ])
     def translate(self, request, pk=None):
         """
-        For endpoints /api/v1/lemma/{id}/translate/
+        For translate lemma by id using strategy.
+        Params:
+        *lang_to - translate lemma to lang_to language
         """
         try:
             lemma = Lemma.objects.get(pk=pk)
@@ -312,9 +314,6 @@ class BoardViewSet(viewsets.ModelViewSet):
         if status_value is None or id_lemma_value is None:
             return Response({"detail": "Both 'status' and 'id_lemma' are required in the request body."},
                             status=status.HTTP_400_BAD_REQUEST)
-
-        choices = [choice for choice in EducationLemma.StatusEducation]
-        logger.info(choices)
 
         if status_value not in [choice for choice in EducationLemma.StatusEducation]:
             return Response({"detail": "Invalid value for 'status'."}, status=status.HTTP_400_BAD_REQUEST)
