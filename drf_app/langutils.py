@@ -227,7 +227,7 @@ class SimVoc:
             stop=None,
             timeout=50  # Опционально: установите таймаут на запрос
         )
-        print(f"Number of tokens for request: {response['usage']['total_tokens']}")
+        logger.info(f"Number of tokens for request: {response['usage']['total_tokens']}")
         response = response.choices[0].text.strip()
         response_str = response.replace('\n', '')
         response_data = json.loads(response_str)
@@ -266,7 +266,7 @@ class SimVoc:
         response = response.strip()
         response_str = response[response.find('main_translate')-2:response.find('}')+1]
         response_str = response_str.replace('\n', '')
-        print(response_str)
+        logger.info(response_str)
         response_data = json.loads(response_str)
         response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
