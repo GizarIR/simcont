@@ -266,7 +266,7 @@ class SimVoc:
         response = response.strip()
         response_str = response[response.find('main_translate')-2:response.find('}')+1]
         response_str = response_str.replace('\n', '')
-        logger.info(response_str)
+        # logger.info(response_str)
         response_data = json.loads(response_str)
         response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
