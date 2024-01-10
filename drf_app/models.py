@@ -157,7 +157,6 @@ class Board(models.Model):
         if len(list_edu_ns) >= limits:
             set_result = self.get_set_lemmas_dict()
         elif len(list_voc) > len(list_edu_nsl):
-            next_lemmas = []
             need_lemmas = limits - len(list_edu_ns)
             # for all versions python
             next_lemmas = [item for item in list_voc if item not in list_edu_nsl][:need_lemmas]
@@ -201,7 +200,7 @@ class Lemma(models.Model):
         VERB = "VERB", _("verb")
 
     class TranslateStatus(models.TextChoices):
-        # TODO update when DB will clear (as the same StatusEducation )
+        # TODO update when DB will clear (as the same StatusEducation ) and test all endpoints for process
         ROOKIE = "Rookie", _("Rookie")
         IN_PROGRESS = "In_Progress", _("In progress")
         TRANSLATED = "Translated", _("Translated")
