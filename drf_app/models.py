@@ -200,10 +200,9 @@ class Lemma(models.Model):
         VERB = "VERB", _("verb")
 
     class TranslateStatus(models.TextChoices):
-        # TODO update when DB will clear (as the same StatusEducation ) and test all endpoints for process
-        ROOKIE = "Rookie", _("Rookie")
-        IN_PROGRESS = "In_Progress", _("In progress")
-        TRANSLATED = "Translated", _("Translated")
+        ROOKIE = "ROO", _("Rookie")
+        IN_PROGRESS = "PRO", _("In progress")
+        TRANSLATED = "TRA", _("Translated")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lemma = models.CharField(max_length=150)
@@ -222,7 +221,7 @@ class Lemma(models.Model):
         through="EducationLemma",
     )
     translate_status = models.CharField(
-        max_length=11,
+        max_length=3,
         choices=TranslateStatus.choices,
         default=TranslateStatus.ROOKIE,
     )
