@@ -158,6 +158,7 @@ class SimVoc:
         clearing_text = re.sub(r'\w*\d\w*', '', clearing_text)
         print(f'Cleaning words with a length of 1 character...')
         clearing_text = re.sub(r'\b\w{1}\b', '', clearing_text)
+        clearing_text = clearing_text.replace('\n', ' ')
         return str(clearing_text)
 
     @staticmethod
@@ -308,6 +309,7 @@ class SimVoc:
 
 
 if __name__ == '__main__':
+    # output_path = 'sandbox/output.txt'
     # source_path = 'sandbox/pmbok5en.pdf'
     # source_path = 'sandbox/test_article.pdf'
     # # source_path = 'sandbox/test_len_doc.pdf'
@@ -316,13 +318,19 @@ if __name__ == '__main__':
     # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
     # file_path = os.path.join(parent_path, source_path)
     # testVoc = SimVoc()
+    # output_file_path = os.path.join(parent_path, output_path)
     #
     # with open(file_path, 'rb') as file:
     #     result = testVoc.convert_to_txt(file, cons_mode=True)
     #     result = testVoc.clean_text(result)
-    #     order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
-    #     testVoc.print_order_lemmas_console(order_dict)
-    #     # print(order_dict)
+        # order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
+        # testVoc.print_order_lemmas_console(order_dict)
+        # print(order_dict)
+
+    # with open(output_file_path, 'w', encoding='utf-8') as output_file:
+    #     output_file.write(result)
+    #
+
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
     # translated_dict = json.loads(SimVoc.strategy_get_translate_chatgpt('orange', 'ru')) # to JSON object
@@ -330,10 +338,10 @@ if __name__ == '__main__':
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'NOUN'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    # print(f"{'*' * 15} Test GT {'*' * 15}")
-    # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("people", "ru"))  # to JSON object - dict
-    # print(translated_dict)
-
-    print(f"{'*' * 15} Test G4F {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("people", "ru", 3))  # to JSON object - dict
+    print(f"{'*' * 15} Test GT {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("people", "ru"))  # to JSON object - dict
     print(translated_dict)
+
+    # print(f"{'*' * 15} Test G4F {'*' * 15}")
+    # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("people", "ru", 3))  # to JSON object - dict
+    # print(translated_dict)

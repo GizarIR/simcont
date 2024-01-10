@@ -54,6 +54,13 @@ class VocabularySerializer(serializers.ModelSerializer):
         return vocabulary
 
 
+class VocabularyIdSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Vocabulary
+        fields = ['id']
+
+
 class TranslateField(serializers.JSONField):
     """
     Example:
@@ -127,6 +134,14 @@ class EducationSerializer(serializers.ModelSerializer):
         return Education.get_list_lemmas_from_voc(obj)
 
 
+class EducationIdSerializer(serializers.ModelSerializer):
+    list_lemmas = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Education
+        fields = ['id']
+
+
 class BoardSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -137,13 +152,13 @@ class BoardSerializer(serializers.ModelSerializer):
 class LemmaSerializer(serializers.ModelSerializer):
     # For definition type of JSON field in Swagger use link:
     # https://drf-yasg.readthedocs.io/en/stable/custom_spec.html#:~:text=class%20EmailMessageField(,%3D%20EmailMessageField()
-    vocabularies = VocabularySerializer(many=True, read_only=True)
+    vocabularies = VocabularyIdSerializer(many=True, read_only=True)
     vocabularies_id = serializers.PrimaryKeyRelatedField(
         queryset=Vocabulary.objects.all(),
         write_only=True,
         many=True
     )
-    educations = EducationSerializer(many=True, read_only=True)
+    educations = EducationIdSerializer(many=True, read_only=True)
     educations_id = serializers.PrimaryKeyRelatedField(
         queryset=Education.objects.all(),
         write_only=True,
@@ -156,8 +171,10 @@ class LemmaSerializer(serializers.ModelSerializer):
         model = Lemma
         fields = (
             'id', 'lemma', 'pos', 'translate',
-            'vocabularies', 'vocabularies_id',
-            'educations', 'educations_id',
+            'vocabularies',
+            'vocabularies_id',
+            'educations',
+            'educations_id',
             'translate_status'
         )
 
