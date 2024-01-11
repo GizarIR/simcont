@@ -63,6 +63,9 @@ class VocabularyViewSet(viewsets.ModelViewSet):
 
         return Vocabulary.objects.filter(Q(learners=user) | Q(author=user))
 
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
     @action(methods=['get'], detail=False, serializer_class=LanguageSerializer)
     def languages(self, request):
         """
@@ -185,6 +188,9 @@ class EducationViewSet(viewsets.ModelViewSet):
             return Education.objects.all()
 
         return Education.objects.filter(learner=user)
+
+    def perform_create(self, serializer):
+        serializer.save(learner=self.request.user)
 
 
 class BoardViewSet(viewsets.ModelViewSet):

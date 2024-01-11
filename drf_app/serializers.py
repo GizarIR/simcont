@@ -38,14 +38,16 @@ class VocabularySerializer(serializers.ModelSerializer):
         write_only=True,
         many=True
     )
+    author = serializers.ReadOnlyField(source='author.id', read_only=True)
 
     class Meta:
         model = Vocabulary
-        fields = ('id', 'title', 'description', 'time_create', 'time_update', 'is_active',
+        fields = ('id', 'title', 'description', 'is_active', 'time_create', 'time_update',
                   'lang_from', 'lang_to', 'order_lemmas', 'source_text', 'author', 'learners',
                   'learners_id', 'order_lemmas_updated')
 
     def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
         learners = validated_data.pop('learners_id', None)
         vocabulary = Vocabulary.objects.create(**validated_data)
         for learner in learners:
@@ -119,6 +121,7 @@ class LanguageSerializer(serializers.ModelSerializer):
 
 class EducationSerializer(serializers.ModelSerializer):
     list_lemmas = serializers.SerializerMethodField()
+    learner = serializers.ReadOnlyField(source='learner.id', read_only=True)
 
     class Meta:
         model = Education
@@ -130,13 +133,15 @@ class EducationSerializer(serializers.ModelSerializer):
             'list_lemmas'
         )
 
+    def create(self, validated_data):
+        validated_data['learner'] = self.context['request'].user
+        return super().create(validated_data)
+
     def get_list_lemmas(self, obj):
         return Education.get_list_lemmas_from_voc(obj)
 
 
 class EducationIdSerializer(serializers.ModelSerializer):
-    list_lemmas = serializers.SerializerMethodField()
-
     class Meta:
         model = Education
         fields = ['id']
