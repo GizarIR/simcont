@@ -31,7 +31,11 @@ class OrderLemmasField(serializers.JSONField):
 
 
 class VocabularySerializer(serializers.ModelSerializer):
-    order_lemmas = OrderLemmasField(required=False, allow_null=True)
+
+    order_lemmas = OrderLemmasField(
+        required=False,
+        allow_null=True,
+    )
     learners = LearnerSerializer(many=True, read_only=True)
     learners_id = serializers.PrimaryKeyRelatedField(
         queryset=CustomUser.objects.all(),
