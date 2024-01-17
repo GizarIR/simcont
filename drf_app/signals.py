@@ -20,7 +20,6 @@ def order_lemmas_create(sender, instance, created, **kwargs):
     return None
 
 
-# TODO signal for create Education
 @receiver(post_save, sender=Education)
 def board_create(sender, instance, created, **kwargs):
     logger.info(f'Create Board for Education: {instance.pk}')

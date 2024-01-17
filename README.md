@@ -3,7 +3,7 @@ Simcont API
 
 Backend part of Simcont project.
 Simcont project is platform for learn English using approach when you learn only need vocabulary.  <br>
-The platform provide upload your vocabulary, and understand witch lemmas in this vocabulary the most using. <br>
+The platform provide upload your vocabulary, and understand which lemmas in this vocabulary the most using. <br>
 
 ## Deploy for developer
 

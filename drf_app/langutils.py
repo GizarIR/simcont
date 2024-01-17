@@ -202,8 +202,11 @@ class SimVoc:
 
         return order_lemmas
 
+
+    # TODO need add handle of Errors when strategy func get wrong data in response
     @staticmethod
     def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
+        # TODO need to translate promt_to_ai to Eng for support different languages
         prompt_to_ai = (
             "Переведи на {} слово {} с не больше {} дополнительных значений "
             "в формате:"
@@ -222,11 +225,11 @@ class SimVoc:
                 text_to_translate,
                 text_to_translate,
             ),
-            max_tokens=512,  # Максимальное количество токенов в каждом запросе
+            max_tokens=512,  # Max count of tokens in response
             temperature=0,
             n=1,
             stop=None,
-            timeout=50  # Опционально: установите таймаут на запрос
+            timeout=50  # Options: set timeout for request
         )
         logger.info(f"Number of tokens for request: {response['usage']['total_tokens']}")
         response = response.choices[0].text.strip()
