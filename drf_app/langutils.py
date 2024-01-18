@@ -120,7 +120,7 @@ class SimVoc:
     def print_order_lemmas_console(lemmas_dict: dict, limit: int = 1) -> Any:
         for lemma, frequency in lemmas_dict.items():
             if frequency >= limit:
-                print(f"{lemma}: {frequency}")
+                logger.info(f"{lemma}: {frequency}")
 
     @staticmethod
     def convert_to_txt(file_obj, cons_mode=False):
