@@ -85,6 +85,8 @@ pydantic_core==2.10.1
 PyExecJS==1.5.1
 pyjsparser==2.7.1
 PyJWT==2.8.0
+PyMuPDF==1.23.16
+PyMuPDFb==1.23.9
 pypdfium2==4.24.0
 PySocks==1.7.1
 python-dateutil==2.8.2
