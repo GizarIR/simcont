@@ -14,17 +14,16 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 3. Install requirements.txt and fill .env file.
-4. Install Postgres in docker
-5. Start docker containers using 
+4. Start docker containers using 
 ```commandline
 docker compose up
 ```
-6. Make migrations.
-7. Start project 
+5. Make migrations.
+6. Start project 
 ```commandline
 python3 manage.py runserver
 ```
-8. Start Celery 
+7. Start Celery 
 ```commandline
 celery -A simcont worker -l INFO
 ```
