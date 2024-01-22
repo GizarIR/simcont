@@ -75,6 +75,15 @@ class LangUtilsTestCase(unittest.TestCase):
 
         mock_logger_info.assert_called_once_with(f"Func convert_to_txt starts to read file {pdf_file_path}.")
 
+    @patch('drf_app.langutils.logger.info')
+    def test_clean_text(self, mock_logger):
+        input_text = "Hello, 123 world!\nThis is a test1."
+        expected_output = "Hello world This is test"
+
+        cleaned_text = SimVoc.clean_text(input_text)
+
+        self.assertEqual(cleaned_text, expected_output)
+
 
 if __name__ == '__main__':
     unittest.main()
