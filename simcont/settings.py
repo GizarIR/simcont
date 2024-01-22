@@ -241,6 +241,7 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'level': LOGGING_LEVEL,
         },
         'file': {
             'class': 'logging.FileHandler',
@@ -257,8 +258,14 @@ LOGGING = {
             'level': LOGGING_LEVEL,
             'propagate': True,
         },
+        '__name__': {
+            'handlers': ['console' if DEBUG else 'file'],
+            'level': LOGGING_LEVEL,
+            'propagate': True,
+        },
     },
 }
+
 # ************* END Logging *************************
 
 # ************* Any EMAIL *************************

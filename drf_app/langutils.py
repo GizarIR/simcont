@@ -27,12 +27,21 @@ from tqdm import tqdm
 import uuid
 import logging
 
-from simcont import settings
+# Import by different ways depend on way of start file
+if 'DJANGO_SETTINGS_MODULE' in os.environ:
+    # if Django start
+    from django.conf import settings
+else:
+    # else console start
+    import logging.config
+    from simcont import settings
+    logging.config.dictConfig(settings.LOGGING)
 
-openai.api_key = settings.OPENAI_API_KEY
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOGGING_LEVEL)
-# print(f"Уровень логирования установлен на: {logger.getEffectiveLevel()}")
+# print(f"Level of logging set up on: {logger.getEffectiveLevel()}")
+
+openai.api_key = settings.OPENAI_API_KEY
 
 
 class PartSpeech(str, Enum):
@@ -332,6 +341,7 @@ if __name__ == '__main__':
         result = testVoc.convert_to_txt(file, cons_mode=True)
         result = testVoc.clean_text(result)
         order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
+        logger.info(f"Hello logger!!!")
         testVoc.print_order_lemmas_console(order_dict)
         # print(order_dict)
 
