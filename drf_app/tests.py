@@ -75,8 +75,7 @@ class LangUtilsTestCase(unittest.TestCase):
 
         mock_logger_info.assert_called_once_with(f"Func convert_to_txt starts to read file {pdf_file_path}.")
 
-    @patch('drf_app.langutils.logger.info')
-    def test_clean_text(self, mock_logger):
+    def test_clean_text(self):
         input_text = "Hello, 123 world!\nThis is a test1."
         expected_output = "Hello world This is test"
 
@@ -84,6 +83,16 @@ class LangUtilsTestCase(unittest.TestCase):
 
         self.assertEqual(cleaned_text, expected_output)
 
+    def test_create_order_lemmas(self):
+        source_text = "This is a sample nice sentence This comes another sentences"
+        types = ["NOUN", "VERB", "ADJ"]
+        cons_mode = False
+
+        result = SimVoc.create_order_lemmas(source_text, types, cons_mode)
+
+        expected_result = {'sentence': 2, 'sample': 1, 'nice': 1, 'come': 1}
+
+        self.assertEqual(result, expected_result)
 
 if __name__ == '__main__':
     unittest.main()

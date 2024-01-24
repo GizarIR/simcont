@@ -216,7 +216,6 @@ class SimVoc:
 
         return order_lemmas
 
-
     # TODO need add handle of Errors when strategy func get wrong data in response
     @staticmethod
     def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
