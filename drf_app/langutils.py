@@ -288,7 +288,6 @@ class SimVoc:
         response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
-
     @staticmethod
     def strategy_get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
         """
@@ -325,27 +324,27 @@ class SimVoc:
 
 
 if __name__ == '__main__':
-    output_path = 'sandbox/output.txt'
+    # output_path = 'sandbox/output.txt'
     # source_path = 'sandbox/pmbok5en.pdf'
-    source_path = 'sandbox/test_article.pdf'
+    # source_path = 'sandbox/test_article.pdf'
     # # source_path = 'sandbox/test_len_doc.pdf'
     # # source_path = 'sandbox/test_speech.txt'
-    current_path = os.path.abspath(__file__)
-    parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
-    file_path = os.path.join(parent_path, source_path)
-    testVoc = SimVoc()
-    output_file_path = os.path.join(parent_path, output_path)
-
-    with open(file_path, 'rb') as file:
-        result = testVoc.convert_to_txt(file, cons_mode=True)
-        result = testVoc.clean_text(result)
-        order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
-        logger.info(f"Hello logger!!!")
-        testVoc.print_order_lemmas_console(order_dict)
-        # print(order_dict)
-
-    with open(output_file_path, 'w', encoding='utf-8') as output_file:
-        output_file.write(result)
+    # current_path = os.path.abspath(__file__)
+    # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
+    # file_path = os.path.join(parent_path, source_path)
+    # testVoc = SimVoc()
+    # output_file_path = os.path.join(parent_path, output_path)
+    #
+    # with open(file_path, 'rb') as file:
+    #     result = testVoc.convert_to_txt(file, cons_mode=True)
+    #     result = testVoc.clean_text(result)
+    #     order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
+    #     logger.info(f"Hello logger!!!")
+    #     testVoc.print_order_lemmas_console(order_dict)
+    #     # print(order_dict)
+    #
+    # with open(output_file_path, 'w', encoding='utf-8') as output_file:
+    #     output_file.write(result)
 
 
 
@@ -355,9 +354,9 @@ if __name__ == '__main__':
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'NOUN'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    # print(f"{'*' * 15} Test GT {'*' * 15}")
-    # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("people", "ru"))  # to JSON object - dict
-    # print(translated_dict)
+    print(f"{'*' * 15} Test GT {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("Hello", "ru"))  # to JSON object - dict
+    print(translated_dict)
 
     # print(f"{'*' * 15} Test G4F {'*' * 15}")
     # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("people", "ru", 3))  # to JSON object - dict

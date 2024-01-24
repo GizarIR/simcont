@@ -1,6 +1,7 @@
 # TODO Create your tests here.
 #  https://www.django-rest-framework.org/api-guide/testing/#testing
 #  https://chat.openai.com/c/709f23ba-47c8-4d27-aa58-2c1d1655003c
+import json
 import os
 import unittest
 
@@ -8,6 +9,7 @@ import fitz
 from django.test import TestCase
 from unittest.mock import patch, MagicMock
 from drf_app.langutils import SimVoc
+from rest_framework.test import APIClient
 
 
 class LangUtilsTestCase(unittest.TestCase):
@@ -27,6 +29,8 @@ class LangUtilsTestCase(unittest.TestCase):
         pdf_page.insert_text((100, 100), "Test content for pdf file.")
         pdf_document.save(pdf_file_path)
         pdf_document.close()
+        # For test_strategy_get_translate_gtrans
+        self.client = APIClient()
 
     def tearDown(self):
         # For test_convert_to_txt_txt_file
@@ -93,6 +97,23 @@ class LangUtilsTestCase(unittest.TestCase):
         expected_result = {'sentence': 2, 'sample': 1, 'nice': 1, 'come': 1}
 
         self.assertEqual(result, expected_result)
+
+    def test_strategy_get_translate_gtrans(self):
+        # Define the input parameters for the function
+        text_to_translate = "hello"
+        lang_to = "ru"
+
+        # Call the function
+        result = SimVoc.strategy_get_translate_gtrans(text_to_translate, lang_to)
+        expected_result = {
+            'main_translate': ['hello', 'həˈlō', 'привет', 'INTJ'],
+            'extra_data': [],
+            'users_inf': []
+        }
+
+        # Assert that the result matches the expected result
+        self.assertEqual(json.loads(result), expected_result)
+
 
 if __name__ == '__main__':
     unittest.main()
