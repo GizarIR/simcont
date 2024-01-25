@@ -160,16 +160,19 @@ class SimVoc:
             return ""
 
     @staticmethod
-    def clean_text(row_text: str) -> str:
-        logger.info(f'Cleaning punctuation marks...')
+    def clean_text(row_text: str, cons_mode: bool = False) -> str:
+        if cons_mode:
+            logger.info(f'Cleaning punctuation marks...')
         clearing_text = re.sub(r'[^\w\s]', '', row_text)
-        logger.info(f'Cleaning words with numbers...')
+        if cons_mode:
+            logger.info(f'Cleaning words with numbers...')
         clearing_text = re.sub(r'\b\d+\b', '', clearing_text)  # word only numbers
         clearing_text = re.sub(
             r'\b\w*\d\w*\b', lambda match: re.sub(r'\d', '', match.group()),
             clearing_text
         )  # words with numbers
-        logger.info(f'Cleaning words with a length of 1 character...')
+        if cons_mode:
+            logger.info(f'Cleaning words with a length of 1 character...')
         clearing_text = re.sub(r'\b\w{1}\b', '', clearing_text)
         clearing_text = clearing_text.replace('\n', ' ')
         clearing_text = ' '.join(clearing_text.split())  # Удаляем лишние пробелы
@@ -218,7 +221,7 @@ class SimVoc:
 
     # TODO need add handle of Errors when strategy func get wrong data in response
     @staticmethod
-    def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num: int = 1) -> str:
+    def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num_extra_translate: int = 1) -> str:
         # TODO need to translate promt_to_ai to Eng for support different languages
         prompt_to_ai = (
             "Переведи на {} слово {} с не больше {} дополнительных значений "
@@ -234,7 +237,7 @@ class SimVoc:
             prompt=prompt_to_ai.format(
                 LANGUAGES[lang_to],
                 text_to_translate,
-                str(num),
+                str(num_extra_translate),
                 text_to_translate,
                 text_to_translate,
             ),
@@ -252,7 +255,7 @@ class SimVoc:
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
     @staticmethod
-    def strategy_get_translate_g4f(text_to_translate: str, lang_to: str, num: int = 1) -> str:
+    def strategy_get_translate_g4f(text_to_translate: str, lang_to: str, num_extra_translate: int = 1) -> str:
         # g4f.debug.logging = True  # Enable debug logging
         g4f.debug.version_check = False  # Disable automatic version checking
         # print(g4f.Provider.Bing.params)  # Print supported args for Bing
@@ -272,7 +275,7 @@ class SimVoc:
                  "content": prompt_to_ai.format(
                      LANGUAGES[lang_to],
                      text_to_translate,
-                     str(num),
+                     str(num_extra_translate),
                      text_to_translate,
                      text_to_translate,
                      )
@@ -354,10 +357,10 @@ if __name__ == '__main__':
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'NOUN'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    print(f"{'*' * 15} Test GT {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("Hello", "ru"))  # to JSON object - dict
-    print(translated_dict)
-
-    # print(f"{'*' * 15} Test G4F {'*' * 15}")
-    # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("people", "ru", 3))  # to JSON object - dict
+    # print(f"{'*' * 15} Test GT {'*' * 15}")
+    # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("Hello", "ru"))  # to JSON object - dict
     # print(translated_dict)
+
+    print(f"{'*' * 15} Test G4F {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("hello", "ru", 1))  # to JSON object - dict
+    print(translated_dict)

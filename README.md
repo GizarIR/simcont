@@ -27,3 +27,9 @@ python3 manage.py runserver
 ```commandline
 celery -A simcont worker -l INFO
 ```
+
+## Test for developer
+
+```commandline
+python3 manage.py test
+```
