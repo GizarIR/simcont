@@ -1,17 +1,30 @@
-# TODO Create your tests here.
-#  https://www.django-rest-framework.org/api-guide/testing/#testing
-#  https://chat.openai.com/c/709f23ba-47c8-4d27-aa58-2c1d1655003c
+import base64
 import json
 import os
 import unittest
 
+
 import fitz
-from django.test import TestCase
-from unittest.mock import patch, MagicMock
+
+from unittest.mock import patch
+
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
 from drf_app.langutils import SimVoc
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
+
+from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+
+
 
 import logging
+
+from drf_app.models import Lang, Vocabulary
+from users.models import CustomUser
+
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
     # if Django start
     from django.conf import settings
@@ -133,25 +146,87 @@ class LangUtilsTestCase(unittest.TestCase):
         self.assertEqual(json.loads(result), expected_result)
 
     def test_strategy_get_translate_g4f(self):
-        logger.info(f"test_strategy_get_translate_g4f")
-        text_to_translate = "hello"
-        lang_to = "ru"
-        num_extra_translate = 1
+        """
+        expected_result = {
+            'main_translate': ['hello', '/hɛˈləʊ/', 'привет', 'INTJ'],
+            'extra_data': [['hello', 'алло', 'INTJ']],
+            'user_inf': []
+        }
+        """
+        if settings.DEFAULT_STRATEGY_TRANSLATE != "get_translate_g4f":
+            logger.info(f"Test test_strategy_get_translate_g4f missed")
+        else:
+            logger.info(f"test_strategy_get_translate_g4f")
 
-        result = SimVoc.strategy_get_translate_g4f(text_to_translate, lang_to, num_extra_translate)
-        # expected_result = {
-        #     'main_translate': ['hello', '/hɛˈləʊ/', 'привет', 'INTJ'],
-        #     'extra_data': [['hello', 'алло', 'INTJ']],
-        #     'user_inf': []
-        # }
-        # self.assertEqual(json.loads(result), expected_result)
-        result_dict = json.loads(result)
-        self.assertIsInstance(result, str)
-        self.assertIn("main_translate", result)
-        self.assertIn("extra_data", result)
-        self.assertIn("user_inf", result)
-        self.assertNotEquals(result_dict["main_translate"], [])
-        self.assertNotEquals(result_dict["extra_data"], [])
+            text_to_translate = "hello"
+            lang_to = "ru"
+            num_extra_translate = 1
+
+            result = SimVoc.strategy_get_translate_g4f(text_to_translate, lang_to, num_extra_translate)
+            result_dict = json.loads(result)
+            self.assertIsInstance(result, str)
+            self.assertIn("main_translate", result)
+            self.assertIn("extra_data", result)
+            self.assertIn("user_inf", result)
+            self.assertNotEquals(result_dict["main_translate"], [])
+            self.assertNotEquals(result_dict["extra_data"], [])
+
+    def test_strategy_get_translate_chatgpt(self):
+        if settings.DEFAULT_STRATEGY_TRANSLATE != "get_translate_chatgpt":
+            logger.info(f"Test test_strategy_get_translate_chatgpt missed")
+        else:
+            logger.info(f"test_strategy_get_translate_chatgpt")
+            text_to_translate = "hello"
+            lang_to = "ru"
+            num_extra_translate = 1
+
+            result = SimVoc.strategy_get_translate_chatgpt(text_to_translate, lang_to, num_extra_translate)
+            result_dict = json.loads(result)
+            self.assertIsInstance(result, str)
+            self.assertIn("main_translate", result)
+            self.assertIn("extra_data", result)
+            self.assertIn("user_inf", result)
+            self.assertNotEquals(result_dict["main_translate"], [])
+            self.assertNotEquals(result_dict["extra_data"], [])
+
+
+# TODO create test for endpoints
+
+class VocabularyTests(APITestCase):
+    def setUp(self):
+        # Создаем необходимые объекты для тестирования
+        self.lang_from = Lang.objects.create(name='English', short_name='en')
+        self.lang_to = Lang.objects.create(name='Russian', short_name='ru')
+        self.user = CustomUser.objects.create_user(email='test_user@example.com', password='password')
+
+        self.vocabulary_data = {
+            'title': 'Test Vocabulary',
+            'description': 'Test Description',
+            'lang_from': str(self.lang_from),
+            'lang_to': str(self.lang_to),
+            'source_text': 'Test Source Text',
+            'author': str(self.user.id),
+        }
+
+        # Создаем JWT-токен для пользователя
+        refresh = RefreshToken.for_user(self.user)
+        self.access_token = str(refresh.access_token)
+
+        self.client = APIClient()
+
+    # def test_create_vocabulary(self):
+    #     # Тестируем создание объекта Vocabulary через API
+    #     url = reverse('vocabulary-list')  # Замените на реальный URL вашего API
+    #
+    #     # Добавляем токен в запрос
+    #     self.client.credentials(HTTP_AUTHORIZATION=f'Basic {base64.b64encode(f"{self.user.email}:{self.user.password}".encode()).decode()}')
+    #
+    #
+    #     response = self.client.post(url, self.vocabulary_data, format='json')
+    #
+    #     self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    #     self.assertEqual(Vocabulary.objects.count(), 1)
+    #     self.assertEqual(Vocabulary.objects.get().title, 'Test Vocabulary')
 
 
 if __name__ == '__main__':
