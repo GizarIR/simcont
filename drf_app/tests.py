@@ -18,13 +18,10 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 
-
-
-import logging
-
 from drf_app.models import Lang, Vocabulary
 from users.models import CustomUser
 
+import logging
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
     # if Django start
     from django.conf import settings
@@ -210,6 +207,7 @@ class VocabularyTests(APITestCase):
 
         # Создаем JWT-токен для пользователя
         refresh = RefreshToken.for_user(self.user)
+        print(refresh)
         self.access_token = str(refresh.access_token)
 
         self.client = APIClient()
@@ -220,7 +218,8 @@ class VocabularyTests(APITestCase):
     #
     #     # Добавляем токен в запрос
     #     self.client.credentials(HTTP_AUTHORIZATION=f'Basic {base64.b64encode(f"{self.user.email}:{self.user.password}".encode()).decode()}')
-    #
+    #     self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}') # for JWT
+
     #
     #     response = self.client.post(url, self.vocabulary_data, format='json')
     #
