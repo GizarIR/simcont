@@ -19,6 +19,7 @@ else:
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOGGING_LEVEL)
 
+
 class RegistrationTestCase(TransactionTestCase):
     def setUp(self):
         self.client = APIClient()

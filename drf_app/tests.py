@@ -8,8 +8,7 @@ import fitz
 
 from unittest.mock import patch
 
-from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from drf_app.langutils import SimVoc
 from rest_framework.test import APIClient, APITestCase
@@ -20,6 +19,7 @@ from rest_framework import status
 
 from drf_app.models import Lang, Vocabulary
 from users.models import CustomUser
+from django.contrib.auth import get_user_model
 
 import logging
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
@@ -192,40 +192,50 @@ class LangUtilsTestCase(unittest.TestCase):
 class VocabularyTests(APITestCase):
     def setUp(self):
         # Создаем необходимые объекты для тестирования
+        user_data = {
+            "email": "test@example.com",
+            "password": "testpassword",
+        }
+
         self.lang_from = Lang.objects.create(name='English', short_name='en')
         self.lang_to = Lang.objects.create(name='Russian', short_name='ru')
-        self.user = CustomUser.objects.create_user(email='test_user@example.com', password='password')
+        self.user = CustomUser.objects.create_user(**user_data)
+        self.user.is_active = True
+        self.user.activation_code = None
+        self.user.save()
 
         self.vocabulary_data = {
             'title': 'Test Vocabulary',
             'description': 'Test Description',
-            'lang_from': str(self.lang_from),
-            'lang_to': str(self.lang_to),
+            'lang_from': str(self.lang_from.id),
+            'lang_to': str(self.lang_to.id),
             'source_text': 'Test Source Text',
             'author': str(self.user.id),
+            'learners_id': [str(self.user.id)],
+
         }
 
-        # Создаем JWT-токен для пользователя
-        refresh = RefreshToken.for_user(self.user)
-        print(refresh)
-        self.access_token = str(refresh.access_token)
-
+        # Get access token for test
+        access_token = AccessToken.for_user(self.user)  # You can get RefreshToken
+        self.access_token = str(access_token)
         self.client = APIClient()
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
 
-    # def test_create_vocabulary(self):
-    #     # Тестируем создание объекта Vocabulary через API
-    #     url = reverse('vocabulary-list')  # Замените на реальный URL вашего API
-    #
-    #     # Добавляем токен в запрос
-    #     self.client.credentials(HTTP_AUTHORIZATION=f'Basic {base64.b64encode(f"{self.user.email}:{self.user.password}".encode()).decode()}')
-    #     self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}') # for JWT
+        # Check auth
+        profile_response = self.client.get('/users/profile/', format='json')
+        if profile_response.status_code != status.HTTP_200_OK:
+            logger.info(f"Login failed. Test response content: {profile_response.content}")
 
-    #
-    #     response = self.client.post(url, self.vocabulary_data, format='json')
-    #
-    #     self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-    #     self.assertEqual(Vocabulary.objects.count(), 1)
-    #     self.assertEqual(Vocabulary.objects.get().title, 'Test Vocabulary')
+    def test_create_vocabulary(self):
+        logger.info(f"test_create_vocabulary")
+        # Create instance Vocabulary by API
+        url = reverse('vocabulary-list')
+
+        response = self.client.post(url, self.vocabulary_data, format='json')
+        # logger.info(f"Test response content: {response.content}")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Vocabulary.objects.count(), 1)
+        self.assertEqual(Vocabulary.objects.get().title, 'Test Vocabulary')
 
 
 if __name__ == '__main__':
