@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import unittest
+import uuid
 
 
 import fitz
@@ -196,7 +197,6 @@ class VocabularyTests(APITestCase):
             "email": "test@example.com",
             "password": "testpassword",
         }
-
         self.lang_from = Lang.objects.create(name='English', short_name='en')
         self.lang_to = Lang.objects.create(name='Russian', short_name='ru')
         self.user = CustomUser.objects.create_user(**user_data)
@@ -212,7 +212,6 @@ class VocabularyTests(APITestCase):
             'source_text': 'Test Source Text',
             'author': str(self.user.id),
             'learners_id': [str(self.user.id)],
-
         }
 
         # Get access token for test
@@ -228,14 +227,26 @@ class VocabularyTests(APITestCase):
 
     def test_create_vocabulary(self):
         logger.info(f"test_create_vocabulary")
-        # Create instance Vocabulary by API
         url = reverse('vocabulary-list')
-
         response = self.client.post(url, self.vocabulary_data, format='json')
         # logger.info(f"Test response content: {response.content}")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.created_vocabulary = json.loads(response.content)
         self.assertEqual(Vocabulary.objects.count(), 1)
-        self.assertEqual(Vocabulary.objects.get().title, 'Test Vocabulary')
+        self.assertEqual(self.created_vocabulary['title'], 'Test Vocabulary')
+
+    def test_retrieve_vocabulary(self):
+        logger.info(f"test_retrieve_vocabulary")
+        url = reverse('vocabulary-list')
+        response = self.client.post(url, self.vocabulary_data, format='json')
+        vocabulary = json.loads(response.content)
+        # logger.info(f"Test response content: {vocabulary['id']}")
+
+        url = reverse('vocabulary-detail', args=[str(vocabulary['id'])])
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['title'], 'Test Vocabulary')
 
 
 if __name__ == '__main__':
