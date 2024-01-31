@@ -19,7 +19,7 @@ class RegisterView(APIView):
         serializer = UserSerializer(data=self.request.data)
         if serializer.is_valid():
             user = get_user_model().objects.create_user(**serializer.validated_data)
-
+            # TODO move to users.signals.py
             send_activation_email.delay(user.id)
 
             return Response(status=HTTP_201_CREATED)

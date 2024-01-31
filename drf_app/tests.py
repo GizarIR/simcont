@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import time
 import unittest
 import uuid
 
@@ -9,6 +10,7 @@ import fitz
 
 from unittest.mock import patch
 
+from django.db.models.signals import post_save
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from drf_app.langutils import SimVoc
@@ -18,7 +20,9 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 
-from drf_app.models import Lang, Vocabulary
+from drf_app.models import Lang, Vocabulary, Lemma
+from drf_app.signals import order_lemmas_create
+from drf_app.tasks import create_order_lemmas_async
 from users.models import CustomUser
 from django.contrib.auth import get_user_model
 
@@ -191,60 +195,70 @@ class LangUtilsTestCase(unittest.TestCase):
 # TODO create test for endpoints
 
 class VocabularyTests(APITestCase):
-    def setUp(self):
-        # Создаем необходимые объекты для тестирования
+    @classmethod
+    def setUpTestData(cls):
         user_data = {
             "email": "test@example.com",
             "password": "testpassword",
         }
-        self.lang_from = Lang.objects.create(name='English', short_name='en')
-        self.lang_to = Lang.objects.create(name='Russian', short_name='ru')
-        self.user = CustomUser.objects.create_user(**user_data)
-        self.user.is_active = True
-        self.user.activation_code = None
-        self.user.save()
 
-        self.vocabulary_data = {
+        # Create common data
+        cls.lang_from = Lang.objects.create(name='English', short_name='en')
+        cls.lang_to = Lang.objects.create(name='Russian', short_name='ru')
+        # TODO create signal for CustomUser model - post_save and
+        #  use:
+        #  post_save.disconnect(send_activation_email, sender=CustomUser)
+        #  ...
+        #  post_save.connect(send_activation_email, sender=CustomUser)
+        user = CustomUser.objects.create_user(**user_data)
+        user.is_active = True
+        user.activation_code = None
+        user.save()
+        cls.user = user
+
+        cls.vocabulary_data = {
             'title': 'Test Vocabulary',
             'description': 'Test Description',
-            'lang_from': str(self.lang_from.id),
-            'lang_to': str(self.lang_to.id),
-            'source_text': 'Test Source Text',
-            'author': str(self.user.id),
-            'learners_id': [str(self.user.id)],
+            'lang_from': str(cls.lang_from.id),
+            'lang_to': str(cls.lang_to.id),
+            'source_text': 'Test Source Text Test',
+            'author': str(cls.user.id),
+            'learners_id': [str(cls.user.id)],
         }
 
-        # Get access token for test
-        access_token = AccessToken.for_user(self.user)  # You can get RefreshToken
-        self.access_token = str(access_token)
-        self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        access_token = AccessToken.for_user(cls.user)
+        cls.access_token = str(access_token)
+        cls.client = APIClient()
+        cls.client.credentials(HTTP_AUTHORIZATION=f'Bearer {cls.access_token}')
 
+        # Create instance of Vocabulary for tests
+        post_save.disconnect(order_lemmas_create, sender=Vocabulary)  # without fill order_lemmas field
+
+        url = reverse('vocabulary-list')
+        response = cls.client.post(url, cls.vocabulary_data, format='json')
+        cls.created_vocabulary = Vocabulary.objects.get(pk=response.json()['id'])
+
+        post_save.connect(order_lemmas_create, sender=Vocabulary)
+
+    def setUp(self):
         # Check auth
-        profile_response = self.client.get('/users/profile/', format='json')
+        profile_response = VocabularyTests.client.get('/users/profile/', format='json')
         if profile_response.status_code != status.HTTP_200_OK:
             logger.info(f"Login failed. Test response content: {profile_response.content}")
 
     def test_create_vocabulary(self):
         logger.info(f"test_create_vocabulary")
-        url = reverse('vocabulary-list')
-        response = self.client.post(url, self.vocabulary_data, format='json')
-        # logger.info(f"Test response content: {response.content}")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.created_vocabulary = json.loads(response.content)
+        # order_lemmas_create(sender=Vocabulary, instance=self.created_vocabulary, created=True)
+        create_order_lemmas_async(self.created_vocabulary.id)
         self.assertEqual(Vocabulary.objects.count(), 1)
-        self.assertEqual(self.created_vocabulary['title'], 'Test Vocabulary')
+        self.assertIsNotNone(Vocabulary.objects.get(pk=self.created_vocabulary.id).order_lemmas)
+        self.assertEqual(Lemma.objects.count(), 3)
+        self.assertEqual(self.created_vocabulary.title, 'Test Vocabulary')
 
     def test_retrieve_vocabulary(self):
         logger.info(f"test_retrieve_vocabulary")
-        url = reverse('vocabulary-list')
-        response = self.client.post(url, self.vocabulary_data, format='json')
-        vocabulary = json.loads(response.content)
-        # logger.info(f"Test response content: {vocabulary['id']}")
-
-        url = reverse('vocabulary-detail', args=[str(vocabulary['id'])])
-
-        response = self.client.get(url)
+        url = reverse('vocabulary-detail', args=[str(self.created_vocabulary.id)])
+        response = VocabularyTests.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['title'], 'Test Vocabulary')
 

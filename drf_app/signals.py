@@ -15,7 +15,7 @@ def order_lemmas_create(sender, instance, created, **kwargs):
     logger.info(f'Send source_txt to Celery for create order_lemmas for vocabulary: {instance.pk}')
     if created:
         # Send task to Celery
-        create_order_lemmas_async.apply_async(args=[instance.pk], countdown=5)
+        create_order_lemmas_async.apply_async(args=[instance.pk], countdown=1)
         instance.save()
     return None
 
