@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .tasks import send_activation_email
 from .serializers import UserSerializer, TokenObtainPairSerializer, UserProfileSerializer
 
 
@@ -19,9 +18,6 @@ class RegisterView(APIView):
         serializer = UserSerializer(data=self.request.data)
         if serializer.is_valid():
             user = get_user_model().objects.create_user(**serializer.validated_data)
-            # TODO move to users.signals.py
-            send_activation_email.delay(user.id)
-
             return Response(status=HTTP_201_CREATED)
         return Response(status=HTTP_400_BAD_REQUEST, data={'errors': serializer.errors})
 

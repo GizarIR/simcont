@@ -1,12 +1,19 @@
 import os
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.test import TransactionTestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 from django.contrib.auth import get_user_model
-
+from django.test import override_settings
 
 import logging
+
+from users.models import CustomUser
+from users.signals import send_activation_email
+from users.tasks import send_activation_email_async
+
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
     # if Django start
     from django.conf import settings
@@ -31,6 +38,8 @@ class RegistrationTestCase(TransactionTestCase):
             "password": "testpassword",
         }
 
+        post_save.disconnect(send_activation_email, sender=CustomUser)
+
         # Send POST request
         response = self.client.post('/users/register/', user_data, format='json')
 
@@ -39,6 +48,8 @@ class RegistrationTestCase(TransactionTestCase):
 
         # Check create user
         self.assertTrue(get_user_model().objects.filter(email=user_data['email']).exists())
+
+        post_save.connect(send_activation_email, sender=CustomUser)
 
         # Get user from DB
         user = get_user_model().objects.get(email=user_data['email'])

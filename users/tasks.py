@@ -5,12 +5,13 @@ from simcont import settings
 
 
 @shared_task
-def send_activation_email(user_id):
+def send_activation_email_async(user_id):
     user = CustomUser.objects.get(pk=user_id)
     activation_code = user.activation_code if user.activation_code else CustomUser.generate_activation_code()
 
     user.activation_code = activation_code
     user.save()
+    # user.save(update_fields=['activation_code'])
 
     subject = f'Account activation'
     message = f'Your activation code: {activation_code}'

@@ -27,6 +27,10 @@ from users.models import CustomUser
 from django.contrib.auth import get_user_model
 
 import logging
+
+from users.signals import send_activation_email
+from users.tasks import send_activation_email_async
+
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
     # if Django start
     from django.conf import settings
@@ -192,7 +196,7 @@ class LangUtilsTestCase(unittest.TestCase):
             self.assertNotEquals(result_dict["extra_data"], [])
 
 
-# TODO create test for endpoints
+# TODO create tests for endpoints
 
 class VocabularyTests(APITestCase):
     @classmethod
@@ -205,16 +209,14 @@ class VocabularyTests(APITestCase):
         # Create common data
         cls.lang_from = Lang.objects.create(name='English', short_name='en')
         cls.lang_to = Lang.objects.create(name='Russian', short_name='ru')
-        # TODO create signal for CustomUser model - post_save and
-        #  use:
-        #  post_save.disconnect(send_activation_email, sender=CustomUser)
-        #  ...
-        #  post_save.connect(send_activation_email, sender=CustomUser)
+
+        post_save.disconnect(send_activation_email, sender=CustomUser)
         user = CustomUser.objects.create_user(**user_data)
         user.is_active = True
         user.activation_code = None
         user.save()
         cls.user = user
+        post_save.connect(send_activation_email, sender=CustomUser)
 
         cls.vocabulary_data = {
             'title': 'Test Vocabulary',
@@ -244,7 +246,7 @@ class VocabularyTests(APITestCase):
         # Check auth
         profile_response = VocabularyTests.client.get('/users/profile/', format='json')
         if profile_response.status_code != status.HTTP_200_OK:
-            logger.info(f"Login failed. Test response content: {profile_response.content}")
+            logger.info(f"Login for VocabularyTests failed . Test response content: {profile_response.content}")
 
     def test_create_vocabulary(self):
         logger.info(f"test_create_vocabulary")
