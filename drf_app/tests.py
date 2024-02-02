@@ -264,6 +264,13 @@ class VocabularyTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['title'], 'Test Vocabulary')
 
+    def test_list_vocabulary(self):
+        logger.info(f"test_list_vocabulary")
+        url = reverse('vocabulary-list')
+        response = VocabularyTests.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
