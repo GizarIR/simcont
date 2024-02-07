@@ -281,11 +281,12 @@ class VocabularyTests(APITestCase):
 
     def test_list_vocabulary_language(self):
         logger.info(f"test_list_vocabulary_language")
-        url = reverse('vocabulary-language')
-
+        url = reverse('vocabulary-language', args=[str(self.created_vocabulary.lang_from.id)])
+        response = VocabularyTests.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'English')
 
 # TODO test Create Lang, Patch for is_active (delete)
-
 
 if __name__ == '__main__':
     unittest.main()
