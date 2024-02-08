@@ -286,7 +286,15 @@ class VocabularyTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], 'English')
 
-# TODO test Create Lang, Patch for is_active (delete)
+    def test_patch_vocabulary(self):
+        logger.info(f"test_patch_vocabulary")
+        change_data = {
+            'is_active': False
+        }
+        url = reverse('vocabulary-detail', args=[str(self.created_vocabulary.lang_from.id)])
+        response = VocabularyTests.client.patch(url, change_data, format='json')
+
+# TODO test Vocabulary Patch for is_active (delete)
 
 if __name__ == '__main__':
     unittest.main()
