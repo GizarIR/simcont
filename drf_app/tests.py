@@ -291,8 +291,14 @@ class VocabularyTests(APITestCase):
         change_data = {
             'is_active': False
         }
-        url = reverse('vocabulary-detail', args=[str(self.created_vocabulary.lang_from.id)])
+        url = reverse('vocabulary-detail', args=[str(self.created_vocabulary.id)])
         response = VocabularyTests.client.patch(url, change_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["is_active"], False)
+
+        response = VocabularyTests.client.patch(url, {'is_active': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 # TODO test Vocabulary Patch for is_active (delete)
 
