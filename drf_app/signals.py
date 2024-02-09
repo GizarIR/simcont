@@ -12,9 +12,8 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Vocabulary)
 def order_lemmas_create(sender, instance, created, **kwargs):
-    logger.info(f'Send source_txt to Celery for create order_lemmas for vocabulary: {instance.pk}')
     if created:
-        # Send task to Celery
+        logger.info(f'Send source_txt to Celery for create order_lemmas for vocabulary: {instance.pk}')
         create_order_lemmas_async.apply_async(args=[instance.pk], countdown=1)
         instance.save()
     return None

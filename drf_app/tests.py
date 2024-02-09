@@ -279,8 +279,8 @@ class VocabularyTests(APITestCase):
         self.assertEqual(len(response.data), 2)
         self.assertEqual(response.data[0]['name'], 'English')
 
-    def test_list_vocabulary_language(self):
-        logger.info(f"test_list_vocabulary_language")
+    def test_get_vocabulary_language(self):
+        logger.info(f"test_get_vocabulary_language")
         url = reverse('vocabulary-language', args=[str(self.created_vocabulary.lang_from.id)])
         response = VocabularyTests.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -288,19 +288,43 @@ class VocabularyTests(APITestCase):
 
     def test_patch_vocabulary(self):
         logger.info(f"test_patch_vocabulary")
-        change_data = {
+        changing_data = {
             'is_active': False
         }
         url = reverse('vocabulary-detail', args=[str(self.created_vocabulary.id)])
-        response = VocabularyTests.client.patch(url, change_data, format='json')
+        response = VocabularyTests.client.patch(url, changing_data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["is_active"], False)
 
+        # Return values is_active for other tests
         response = VocabularyTests.client.patch(url, {'is_active': True}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-# TODO test Vocabulary Patch for is_active (delete)
+
+class LemmaTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.lemma_data = {
+            'lemma': 'Text',
+            'pos': 'NOUN',
+            'translate': {},
+            'vocabularies': None,
+            'educations': None,
+            'translate_status': None,
+        }
+
+    def test_get_lemma(self):
+        logger.info(f"test_get_lemma")
+        print(Vocabulary.objects.all())
+
+
+
+# TODO test for Lemma's model for it you need to create
+#  class BaseTestCase(APITestCase):
+#     @classmethod
+#     def create_test_data(cls):
+
 
 if __name__ == '__main__':
     unittest.main()
