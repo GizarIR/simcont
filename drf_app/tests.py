@@ -197,8 +197,16 @@ class LangUtilsTestCase(unittest.TestCase):
 
 
 # TODO create tests for endpoints
+# TODO test for Lemma's model for it you need to create
+#  class BaseTestCase(APITestCase):
+#     @classmethod
+#     def setUpClass(cls):
 
-class VocabularyTests(APITestCase):
+class BaseTestCase(APITestCase):
+    pass
+
+
+class VocabularyTests(BaseTestCase):
     @classmethod
     def setUpTestData(cls):
         user_data = {
@@ -302,28 +310,21 @@ class VocabularyTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class LemmaTests(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.lemma_data = {
-            'lemma': 'Text',
-            'pos': 'NOUN',
-            'translate': {},
-            'vocabularies': None,
-            'educations': None,
-            'translate_status': None,
-        }
+class LemmaTests(BaseTestCase):
+    # @classmethod
+    # def setUpTestData(cls):
+    #     cls.lemma_data = {
+    #         'lemma': 'Text',
+    #         'pos': 'NOUN',
+    #         'translate': {},
+    #         'vocabularies': None,
+    #         'educations': None,
+    #         'translate_status': None,
+    #     }
 
     def test_get_lemma(self):
         logger.info(f"test_get_lemma")
         print(Vocabulary.objects.all())
-
-
-
-# TODO test for Lemma's model for it you need to create
-#  class BaseTestCase(APITestCase):
-#     @classmethod
-#     def create_test_data(cls):
 
 
 if __name__ == '__main__':
