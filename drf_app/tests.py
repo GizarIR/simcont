@@ -30,6 +30,7 @@ import logging
 
 from users.signals import send_activation_email
 from users.tasks import send_activation_email_async
+from users.tests import BaseUserCase
 
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
     # if Django start
@@ -198,15 +199,15 @@ class LangUtilsTestCase(unittest.TestCase):
 
 # TODO create tests for endpoints
 # TODO test for Lemma's model for it you need to create
-#  class BaseTestCase(APITestCase):
+#  class BaseTestCase(BaseUserCase):
 #     @classmethod
 #     def setUpClass(cls):
 
-class BaseTestCase(APITestCase):
+class BaseTestCase(BaseUserCase):
     pass
 
 
-class VocabularyTests(BaseTestCase):
+class VocabularyTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         user_data = {

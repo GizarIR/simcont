@@ -4,7 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.test import TransactionTestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 from django.contrib.auth import get_user_model
 from django.test import override_settings
 
@@ -27,13 +27,13 @@ logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOGGING_LEVEL)
 
 
-class RegistrationTestCase(TransactionTestCase):
-    def setUp(self):
-        self.client = APIClient()
+class BaseUserCase(APITestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.client = APIClient()
 
-    def test_user_registration(self):
-        logger.info(f"test_user_registration")
-        user_data = {
+        cls.user_data = {
             "email": "test@example.com",
             "password": "testpassword",
         }
@@ -41,52 +41,47 @@ class RegistrationTestCase(TransactionTestCase):
         post_save.disconnect(send_activation_email, sender=CustomUser)
 
         # Send POST request
-        response = self.client.post('/users/register/', user_data, format='json')
-
-        # Check  (HTTP 201 Created)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Check create user
-        self.assertTrue(get_user_model().objects.filter(email=user_data['email']).exists())
-
-        post_save.connect(send_activation_email, sender=CustomUser)
-
-        # Get user from DB
-        user = get_user_model().objects.get(email=user_data['email'])
-
-        # Get activation code
-        activation_code = user.activation_code
+        cls.create_response = cls.client.post('/users/register/', cls.user_data, format='json')
+        cls.user = get_user_model().objects.get(email=cls.user_data['email'])
 
         # Activate user
-        activation_data = {"activation_code": activation_code}
-        activation_response = self.client.post('/users/activate/', activation_data, format='json')
-
-        # Check activate (HTTP 200 OK)
-        self.assertEqual(activation_response.status_code, status.HTTP_200_OK)
+        activation_data = {"activation_code": cls.user.activation_code}
+        cls.activation_response = cls.client.post('/users/activate/', activation_data, format='json')
 
         # Login by JWT-token
-        login_data = {
-            "email": user_data['email'],
-            "password": user_data['password'],
-        }
         # Send post request for login
-        login_response = self.client.post('/users/token/obtain/', login_data, format='json')
+        cls.login_response = cls.client.post('/users/token/obtain/', cls.user_data, format='json')
 
-        if login_response.status_code != status.HTTP_200_OK:
-            logger.info(f"Login failed. Response content: {login_response.content}")
-
-        # Check success login (HTTP 200 OK) and get JWT-token
-        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', login_response.data)
-        self.assertIn('refresh', login_response.data)
+        if cls.login_response.status_code != status.HTTP_200_OK:
+            logger.info(f"Login failed. Response content: {cls.login_response.content}")
 
         # Check authentication
-        access_token = login_response.data['access']
-        authenticated_client = APIClient()
-        authenticated_client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        access_token = cls.login_response.data['access']
+        cls.authenticated_client = APIClient()
+        cls.authenticated_client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
 
+
+class RegistrationTestCase(BaseUserCase):
+
+    def test_user_registration(self):
+        logger.info(f"test_user_registration")
+
+        # Check  (HTTP 201 Created)
+        self.assertEqual(self.create_response.status_code, status.HTTP_201_CREATED)
+
+        # Check create user
+        self.assertEqual(self.user.email, "test@example.com")
+
+        # Check activate (HTTP 200 OK)
+        self.assertEqual(self.activation_response.status_code, status.HTTP_200_OK)
+
+        # Check success login (HTTP 200 OK) and get JWT-token
+        self.assertEqual(self.login_response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', self.login_response.data)
+        self.assertIn('refresh', self.login_response.data)
+
+        # Check authentication
         # Example for check
-        profile_response = authenticated_client.get('/users/profile/', format='json')
-
+        profile_response = self.authenticated_client.get('/users/profile/', format='json')
         # Check success result (HTTP 200 OK)
         self.assertEqual(profile_response.status_code, status.HTTP_200_OK)
