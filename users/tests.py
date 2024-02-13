@@ -1,18 +1,15 @@
 import os
+import unittest
 
 from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.test import TransactionTestCase
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 from django.contrib.auth import get_user_model
-from django.test import override_settings
 
 import logging
 
 from users.models import CustomUser
 from users.signals import send_activation_email
-from users.tasks import send_activation_email_async
 
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
     # if Django start
@@ -85,3 +82,7 @@ class RegistrationTestCase(BaseUserCase):
         profile_response = self.authenticated_client.get('/users/profile/', format='json')
         # Check success result (HTTP 200 OK)
         self.assertEqual(profile_response.status_code, status.HTTP_200_OK)
+
+
+if __name__ == '__main__':
+    unittest.main()
