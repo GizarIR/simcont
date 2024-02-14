@@ -141,9 +141,22 @@ class LemmaTests(BaseViewTestCase):
     #         'translate_status': None,
     #     }
 
-    def test_get_lemma(self):
-        logger.info(f"test_get_lemma")
-        print(Vocabulary.objects.all(), self.created_vocabulary.id, Vocabulary.objects.first().order_lemmas)
+    def test_list_lemma(self):
+        logger.info(f"test_list_lemma")
+        # print(Vocabulary.objects.all(), self.created_vocabulary.id, Vocabulary.objects.first().order_lemmas)
+        url = reverse('lemma-list')
+        response = self.authenticated_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 3)
+
+    def test_retrieve_lemma(self):
+        logger.info(f"test_retrieve_lemma")
+        lemma = Lemma.objects.get(lemma='test')
+        url = reverse('lemma-detail', args=[str(lemma.id)])
+        response = self.authenticated_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['lemma'], 'test')
+
 
 
 if __name__ == '__main__':
