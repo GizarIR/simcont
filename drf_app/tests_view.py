@@ -31,13 +31,17 @@ class BaseViewTestCase(BaseUserCase):
     def setUpClass(cls):
         super().setUpClass()
         # Create common data
-        cls.lang_from = Lang.objects.create(name='English', short_name='en')
-        cls.lang_to = Lang.objects.create(name='Russian', short_name='ru')
+        try:
+            cls.lang_from = Lang.objects.create(name='English', short_name='en')
+            cls.lang_to = Lang.objects.create(name='Russian', short_name='ru')
+        except Exception as e:
+            logger.info(f"An error has occurred: {e}")
+
         cls.vocabulary_data = {
             'title': 'Test Vocabulary',
             'description': 'Test Description',
-            'lang_from': str(cls.lang_from.id),
-            'lang_to': str(cls.lang_to.id),
+            'lang_from': str(cls.lang_from.id) if cls.lang_from else 'en',
+            'lang_to': str(cls.lang_to.id) if cls.lang_from else 'ru',
             'source_text': 'Test Source Text Test',
             'author': str(cls.user.id),
             'learners_id': [str(cls.user.id)],
@@ -60,6 +64,7 @@ class BaseViewTestCase(BaseUserCase):
         cls.lang_from.delete()
         cls.lang_to.delete()
         cls.created_vocabulary.delete()
+
 
 class VocabularyTests(BaseViewTestCase):
     @classmethod
@@ -126,24 +131,22 @@ class VocabularyTests(BaseViewTestCase):
 
 
 class LemmaTests(BaseViewTestCase):
+    """
+    lemma_data = {
+            'lemma': 'text',
+            'pos': 'X',
+            'translate': {},
+            'vocabularies': UUID_id,
+            'educations': UUID_id,
+            'translate_status': <ROO, PRO, TRA>
+        }
+    """
     @classmethod
     def setUpTestData(cls):
         logger.info(f"***** Create test data for {cls.__name__} *****")
 
-    # @classmethod
-    # def setUpTestData(cls):
-    #     cls.lemma_data = {
-    #         'lemma': 'Text',
-    #         'pos': 'NOUN',
-    #         'translate': {},
-    #         'vocabularies': None,
-    #         'educations': None,
-    #         'translate_status': None,
-    #     }
-
     def test_list_lemma(self):
         logger.info(f"test_list_lemma")
-        # print(Vocabulary.objects.all(), self.created_vocabulary.id, Vocabulary.objects.first().order_lemmas)
         url = reverse('lemma-list')
         response = self.authenticated_client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -157,6 +160,24 @@ class LemmaTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['lemma'], 'test')
 
+    def test_patch_lemma(self):
+        logger.info(f"test_patch_lemma")
+        lemma = Lemma.objects.get(lemma='test')
+        changing_data = {
+                         'translate_status': 'PRO'
+        }
+        url = reverse('lemma-detail', args=[str(lemma.id)])
+        response = self.authenticated_client.patch(url, changing_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["translate_status"], Lemma.TranslateStatus.IN_PROGRESS)
+
+        # Return values is_active for other tests
+        response = self.authenticated_client.patch(
+            url,
+            {'translate_status': Lemma.TranslateStatus.ROOKIE},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 if __name__ == '__main__':
