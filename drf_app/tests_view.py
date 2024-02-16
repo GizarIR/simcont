@@ -179,6 +179,22 @@ class LemmaTests(BaseViewTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_create_lemma(self):
+        logger.info(f"test_create_lemma")
+        lemma_data = {
+            'lemma': 'hello',
+            'pos': 'X',
+            'translate': {},
+            'vocabularies': [],
+            'educations': [],
+            'translate_status': 'ROO'
+        }
+
+        url = reverse('lemma-list')
+        response = self.authenticated_client.post(url, lemma_data, format='json')
+        self.assertEqual(Lemma.objects.count(), 4)
+        self.assertEqual(Lemma.objects.get(pk=str(response.data['id'])).lemma, 'hello')
+
 
 if __name__ == '__main__':
     unittest.main()

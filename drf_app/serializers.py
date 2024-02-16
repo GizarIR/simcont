@@ -165,13 +165,15 @@ class LemmaSerializer(serializers.ModelSerializer):
     vocabularies_id = serializers.PrimaryKeyRelatedField(
         queryset=Vocabulary.objects.all(),
         write_only=True,
-        many=True
+        many=True,
+        required=False
     )
     educations = EducationIdSerializer(many=True, read_only=True)
     educations_id = serializers.PrimaryKeyRelatedField(
         queryset=Education.objects.all(),
         write_only=True,
-        many=True
+        many=True,
+        required=False
     )
 
     translate = TranslateField()
@@ -191,10 +193,16 @@ class LemmaSerializer(serializers.ModelSerializer):
         vocabularies = validated_data.pop('vocabularies_id', None)
         educations = validated_data.pop('educations_id', None)
         lemma = Lemma.objects.create(**validated_data)
-        for voc in vocabularies:
-            lemma.vocabularies.add(voc.id)
-        for edu in educations:
-            lemma.educations.add(edu.id)
+        if vocabularies:
+            for voc in vocabularies:
+                lemma.vocabularies.add(voc.id)
+        else:
+            lemma.vocabularies.set([])
+        if educations:
+            for edu in educations:
+                lemma.educations.add(edu.id)
+        else:
+            lemma.educations.set([])
         lemma.save()
         return lemma
 
