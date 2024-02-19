@@ -179,6 +179,7 @@ class LemmaTests(BaseViewTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    # TODO add check created lemma, is there this lemma in vocabulary
     def test_create_lemma(self):
         logger.info(f"test_create_lemma")
         lemma_data = {
@@ -194,6 +195,28 @@ class LemmaTests(BaseViewTestCase):
         response = self.authenticated_client.post(url, lemma_data, format='json')
         self.assertEqual(Lemma.objects.count(), 4)
         self.assertEqual(Lemma.objects.get(pk=str(response.data['id'])).lemma, 'hello')
+
+    def test_delete_lemma(self):
+        logger.info(f"test_delete_lemma")
+        lemma_data = {
+            'lemma': 'frog',
+            # 'pos': 'X',
+            # 'translate': {},
+            # 'vocabularies': [],
+            # 'educations': [],
+            # 'translate_status': 'ROO'
+        }
+
+        lemma = Lemma.objects.create(**lemma_data)
+        lemma.vocabularies.add(Vocabulary.objects.first(), through_defaults={"frequency": 0})
+        lemma.save()
+
+        url = reverse('lemma-detail', args=[str(lemma.id)])
+        response = self.authenticated_client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Lemma.objects.count(), 3)
+        self.assertEqual(Lemma.objects.filter(pk=str(lemma.id)).exists(), False)
 
 
 if __name__ == '__main__':

@@ -34,6 +34,8 @@ router.register(r'education', EducationViewSet)
 router.register(r'board', BoardViewSet)
 
 
+# print(router.urls)
+
 # For Swagger
 schema_view = get_schema_view(
    openapi.Info(
