@@ -1,5 +1,7 @@
 import os
+import time
 import unittest
+
 
 from django.db.models.signals import post_save
 from django.urls import reverse
@@ -217,6 +219,17 @@ class LemmaTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Lemma.objects.count(), 3)
         self.assertEqual(Lemma.objects.filter(pk=str(lemma.id)).exists(), False)
+
+    def test_translate_lemma(self):
+        logger.info(f"test_translate_lemma")
+        lemma = Lemma.objects.all().first()
+
+        # TODO create new version use translate lemma with Signals for organaze righ testing
+        # post_save.disconnect(get_translate_lemma, sender=Lemma)
+
+        url = reverse('lemma-translate', args=[str(lemma.id)])
+        response = self.authenticated_client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 if __name__ == '__main__':
