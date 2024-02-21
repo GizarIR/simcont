@@ -229,6 +229,8 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 CELERY_EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# CELERY_TASK_DEFAULT_EXPIRES = 3600  # Time to expired task
 # ************* END Celery *************************
 
 # ************* Logging *************************

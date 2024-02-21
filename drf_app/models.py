@@ -121,7 +121,7 @@ class Board(models.Model):
             (Q(status=EducationLemma.StatusEducation.NEW) | Q(status=EducationLemma.StatusEducation.ON_STUDY))
         ).values_list('throughLemma', flat=True))
 
-        logger.info([Lemma.objects.get(pk=lemma_id) for lemma_id in list_edu_ns_upd])
+        # logger.info(f"Information for test: {[Lemma.objects.get(pk=lemma_id) for lemma_id in list_edu_ns_upd]}")
 
         for day in range(1, education.limit_lemmas_period + 1):
             result[day] = [

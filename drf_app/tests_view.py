@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.urls import reverse
 from rest_framework import status
 
-from drf_app.models import Lang, Vocabulary, Lemma
+from drf_app.models import Lang, Vocabulary, Lemma, Education, Board
 from drf_app.signals import order_lemmas_create
 from drf_app.tasks import create_order_lemmas_async
 
@@ -58,6 +58,7 @@ class BaseViewTestCase(BaseUserCase):
         post_save.connect(order_lemmas_create, sender=Vocabulary)
 
         create_order_lemmas_async(Vocabulary.objects.first().id)
+
 
     @classmethod
     def tearDownClass(cls):
@@ -224,12 +225,42 @@ class LemmaTests(BaseViewTestCase):
         logger.info(f"test_translate_lemma")
         lemma = Lemma.objects.all().first()
 
-        # TODO create new version use translate lemma with Signals for organaze righ testing
+        # TODO create new version use translate lemma with Signals for organize whole testing strategy
         # post_save.disconnect(get_translate_lemma, sender=Lemma)
 
         url = reverse('lemma-translate', args=[str(lemma.id)])
         response = self.authenticated_client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class EducationTests(BaseViewTestCase):
+    @classmethod
+    def setUpClass(cls):
+        logger.info(f"***** Create test data for {cls.__name__} *****")
+        super().setUpClass()
+
+        cls.education_data = {
+            'vocabulary': str(cls.created_vocabulary.id),
+            'limit_lemmas_item': 1,
+            'limit_lemmas_period': 2,
+        }
+
+        url_edu = reverse('education-list')
+        response_edu = cls.authenticated_client.post(url_edu, cls.education_data, format='json')
+        cls.created_education = Education.objects.get(pk=response_edu.json()['id'])
+        cls.create_education_status = response_edu.status_code
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        # Clean up any data as needed
+        cls.created_education.delete()
+
+    def test_create_education(self):
+        logger.info(f"test_create_education")
+        self.assertEqual(self.create_education_status, status.HTTP_201_CREATED)
+        self.assertEqual(Education.objects.count(), 1)
+        self.assertEqual(Board.objects.count(), 1)
 
 
 if __name__ == '__main__':
