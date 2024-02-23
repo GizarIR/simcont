@@ -269,6 +269,13 @@ class EducationTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
 
+    def test_retrieve_education(self):
+        logger.info(f"test_retrieve_education")
+        url = reverse('education-detail', args=[str(self.created_education.id)])
+        response = self.authenticated_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['is_finished'])
+
 
 if __name__ == '__main__':
     unittest.main()
