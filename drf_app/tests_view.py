@@ -276,6 +276,24 @@ class EducationTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data['is_finished'])
 
+    def test_patch_education(self):
+        logger.info(f"test_patch_education")
+        changing_data = {
+                         'is_finished': True
+        }
+        url = reverse('education-detail', args=[str(self.created_education.id)])
+        response = self.authenticated_client.patch(url, changing_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["is_finished"])
+
+        # Return values is_active for other tests
+        response = self.authenticated_client.patch(
+            url,
+            {'is_finished': False},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
 if __name__ == '__main__':
     unittest.main()
