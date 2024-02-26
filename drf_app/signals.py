@@ -21,8 +21,8 @@ def order_lemmas_create(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Education)
 def board_create(sender, instance, created, **kwargs):
-    logger.info(f'Create Board for Education: {instance.pk}')
     if created:
+        logger.info(f'Create Board for Education: {instance.pk}')
         instance.save()
         board = Board.objects.create(education=instance)
         board.update_set_lemmas()
