@@ -294,6 +294,24 @@ class EducationTests(BaseViewTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_delete_education(self):
+        logger.info(f"test_delete_education")
+        education_data = {
+            'vocabulary': self.created_vocabulary,
+            'learner': self.user,
+        }
+
+        education = Education.objects.create(**education_data)
+        education.save()
+        self.assertEqual(Education.objects.count(), 2)
+
+        url = reverse('education-detail', args=[str(education.id)])
+        response = self.authenticated_client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Education.objects.count(), 1)
+        self.assertEqual(Education.objects.filter(pk=str(education.id)).exists(), False)
+
 
 if __name__ == '__main__':
     unittest.main()
