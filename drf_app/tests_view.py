@@ -313,5 +313,41 @@ class EducationTests(BaseViewTestCase):
         self.assertEqual(Education.objects.filter(pk=str(education.id)).exists(), False)
 
 
+class BoardTests(BaseViewTestCase):
+    @classmethod
+    def setUpClass(cls):
+        logger.info(f"***** Create test data for {cls.__name__} *****")
+        super().setUpClass()
+        cls.education_data = {
+            'vocabulary': str(cls.created_vocabulary.id),
+            'limit_lemmas_item': 1,
+            'limit_lemmas_period': 2,
+        }
+
+        url_edu = reverse('education-list')
+        response_edu = cls.authenticated_client.post(url_edu, cls.education_data, format='json')
+        cls.created_education = Education.objects.get(pk=response_edu.json()['id'])
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        # Clean up any data as needed
+        cls.created_education.delete()
+
+    def test_create_board(self):
+        logger.info(f"test_create_board")
+        self.assertEqual(Board.objects.count(), 1)
+
+        board_data = {
+            'education': str(self.created_education.id),
+        }
+
+        url = reverse('board-list')
+        response = self.authenticated_client.post(url, board_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Board.objects.count(), 2)
+        self.assertIsNone(Board.objects.get(pk=str(response.data['id'])).set_lemmas)
+
+
 if __name__ == '__main__':
     unittest.main()
