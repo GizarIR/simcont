@@ -348,6 +348,13 @@ class BoardTests(BaseViewTestCase):
         self.assertEqual(Board.objects.count(), 2)
         self.assertIsNone(Board.objects.get(pk=str(response.data['id'])).set_lemmas)
 
+    def test_list_boards(self):
+        logger.info(f"test_list_boards")
+        url = reverse('board-list')
+        response = self.authenticated_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
