@@ -205,7 +205,7 @@ class BoardViewSet(viewsets.ModelViewSet):
         if pk:
             try:
                 board = Board.objects.get(pk=pk)
-                education = Education.objects.get(pk=board.education)
+                education = Education.objects.get(pk=board.education_id)
                 if user.is_staff or user == education.learner:
                     return Board.objects.filter(pk=pk)
                 else:
