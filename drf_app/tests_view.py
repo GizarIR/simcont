@@ -363,6 +363,23 @@ class BoardTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data['set_lemmas'])
 
+    def test_delete_board(self):
+        logger.info(f"test_delete_board")
+        board_data = {
+            'education': self.created_education,
+        }
+
+        board = Board.objects.create(**board_data)
+        board.save()
+        self.assertEqual(Board.objects.count(), 2)
+
+        url = reverse('board-detail', args=[str(board.id)])
+        response = self.authenticated_client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Board.objects.count(), 1)
+        self.assertEqual(Board.objects.filter(pk=str(board.id)).exists(), False)
+
 
 if __name__ == '__main__':
     unittest.main()
