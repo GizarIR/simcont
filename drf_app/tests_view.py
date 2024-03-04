@@ -1,7 +1,8 @@
+import json
 import os
 import time
 import unittest
-
+from urllib.parse import urlencode
 
 from django.db.models.signals import post_save
 from django.urls import reverse
@@ -379,6 +380,22 @@ class BoardTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Board.objects.count(), 1)
         self.assertEqual(Board.objects.filter(pk=str(board.id)).exists(), False)
+
+    def test_get_study_status(self):
+        logger.info(f"test_get_study_status")
+        education = self.created_education
+        board = Board.objects.filter(education=education)[0]
+        id_lemma = json.loads(board.set_lemmas)['1'][0]
+
+        # url = reverse('board-get-study-status', kwargs={'pk': str(board.id)})
+        # url += f'?id_lemma={id_lemma}'
+        # or
+        query_params = urlencode({'id_lemma': id_lemma})
+        url = reverse('board-get-study-status', kwargs={'pk': str(board.id)}) + '?' + query_params
+
+        response = self.authenticated_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'NE')
 
 
 if __name__ == '__main__':
