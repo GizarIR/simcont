@@ -287,7 +287,7 @@ class BoardViewSet(viewsets.ModelViewSet):
             required=['status', 'id_lemma']
         ),
         responses={
-            200: BoardSerializer(),
+            200: EducationLemmaSerializer(),
             400: 'Bad Request',
             404: 'Not Found'
         }
