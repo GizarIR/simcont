@@ -397,6 +397,31 @@ class BoardTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'NE')
 
+    def test_set_study_status(self):
+        logger.info(f"test_set_study_status")
+        education = self.created_education
+        board = Board.objects.filter(education=education)[0]
+        id_lemma = json.loads(board.set_lemmas)['1'][0]
+
+        changing_data = {
+            'status': 'ST',
+            'id_lemma': id_lemma
+        }
+
+        url = reverse('board-set-study-status', args=[str(board.id)])
+        response = self.authenticated_client.patch(url, changing_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], 'ST')
+
+        # Return values is_active for other tests
+        response = self.authenticated_client.patch(
+            url,
+            {'status': 'NE', 'id_lemma': id_lemma},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], 'NE')
+
 
 if __name__ == '__main__':
     unittest.main()
