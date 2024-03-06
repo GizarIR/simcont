@@ -422,6 +422,14 @@ class BoardTests(BaseViewTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], 'NE')
 
+    def test_update_set_lemmas(self):
+        logger.info(f"test_update_set_lemmas")
+        board = Board.objects.first()
+        url = reverse('board-update-set-lemmas', args=[str(board.id)])
+        response = self.authenticated_client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data['set_lemmas'])
+
 
 if __name__ == '__main__':
     unittest.main()
