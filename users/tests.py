@@ -1,3 +1,4 @@
+import base64
 import os
 import unittest
 
@@ -24,6 +25,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(settings.LOGGING_LEVEL)
 
 
+def encode_image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
+    return encoded_image
+
+
 class BaseUserCase(APITestCase):
     @classmethod
     def setUpClass(cls):
@@ -33,6 +40,7 @@ class BaseUserCase(APITestCase):
         cls.user_data = {
             "email": "test@example.com",
             "password": "testpassword",
+            # "avatar": encode_image_to_base64(settings.MEDIA_URL + 'defaults/default_avatar.png')
         }
 
         post_save.disconnect(send_activation_email, sender=CustomUser)
@@ -77,11 +85,11 @@ class RegistrationTestCase(BaseUserCase):
         self.assertIn('access', self.login_response.data)
         self.assertIn('refresh', self.login_response.data)
 
-        # Check authentication
-        # Example for check
+    def test_get_profile(self):
+        logger.info(f"test_get_profile")
         profile_response = self.authenticated_client.get('/users/profile/', format='json')
-        # Check success result (HTTP 200 OK)
         self.assertEqual(profile_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(profile_response.data['email'], 'test@example.com')
 
 
 if __name__ == '__main__':
