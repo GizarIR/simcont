@@ -64,14 +64,20 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 class ChangePasswordView(APIView):
     permission_classes = (IsAuthenticated,)
 
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        required=['old_password', 'new_password'],
-        properties={
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['old_password', 'new_password'],
+            properties={
             'old_password': openapi.Schema(type=openapi.TYPE_STRING, description='Your current password'),
             'new_password': openapi.Schema(type=openapi.TYPE_STRING, description='Your new password'),
+            },
+        ),
+        responses={
+            200: 'Password changed successfully.',
+            400: 'Old password is incorrect.',
         }
-    ))
+    )
     def post(self, request, *args, **kwargs):
         user = request.user
         old_password = request.data.get('old_password')

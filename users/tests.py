@@ -6,6 +6,7 @@ from django.db.models.signals import post_save
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 import logging
 
@@ -90,6 +91,16 @@ class RegistrationTestCase(BaseUserCase):
         profile_response = self.authenticated_client.get('/users/profile/', format='json')
         self.assertEqual(profile_response.status_code, status.HTTP_200_OK)
         self.assertEqual(profile_response.data['email'], 'test@example.com')
+
+    def test_change_password(self):
+        logger.info(f"test_change_password")
+        password_data = {
+            'old_password': self.user_data['password'],
+            'new_password': "new_testpassword",
+        }
+        url = reverse('change_password')
+        response = self.authenticated_client.post(url, password_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 if __name__ == '__main__':
