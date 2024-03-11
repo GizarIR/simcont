@@ -13,7 +13,20 @@ from .serializers import UserSerializer, TokenObtainPairSerializer, UserProfileS
 
 class RegisterView(APIView):
     http_method_names = ['post']
-
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', 'password'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, description='Your email'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='Your password'),
+            },
+        ),
+        responses={
+            201: 'User created successfully.',
+            400: 'Request error.',
+        }
+    )
     def post(self, *args, **kwargs):
         serializer = UserSerializer(data=self.request.data)
         if serializer.is_valid():
