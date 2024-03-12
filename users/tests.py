@@ -2,6 +2,7 @@ import base64
 import os
 import unittest
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models.signals import post_save
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -100,6 +101,22 @@ class RegistrationTestCase(BaseUserCase):
         }
         url = reverse('change_password')
         response = self.authenticated_client.post(url, password_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_put_profile(self):
+        logger.info(f"test_put_profile")
+
+        image_path = settings.MEDIA_ROOT + '/defaults/default_avatar.png'
+        image_file = open(image_path, 'rb')
+        image = SimpleUploadedFile(image_file.name, image_file.read())
+
+        changing_data = {
+            "email": self.user_data["email"],
+            "avatar": image,
+        }
+
+        url = reverse('user_profile')
+        response = self.authenticated_client.put(url, changing_data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
