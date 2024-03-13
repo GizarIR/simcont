@@ -69,6 +69,10 @@ class BaseUserCase(APITestCase):
 
 
 class RegistrationTestCase(BaseUserCase):
+    @classmethod
+    def setUpClass(cls):
+        logger.info(f"***** Create test data for {cls.__name__} *****")
+        super().setUpClass()
 
     def test_user_registration(self):
         logger.info(f"test_user_registration")
@@ -118,6 +122,33 @@ class RegistrationTestCase(BaseUserCase):
         url = reverse('user_profile')
         response = self.authenticated_client.put(url, changing_data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_patch_profile(self):
+        logger.info(f"test_patch_profile")
+
+        image_path = settings.MEDIA_ROOT + '/defaults/default_avatar.png'
+        image_file = open(image_path, 'rb')
+        image = SimpleUploadedFile(image_file.name, image_file.read())
+
+        changing_data = {
+            "email": self.user_data["email"],
+            "avatar": image,
+        }
+
+        url = reverse('user_profile')
+        response = self.authenticated_client.put(url, changing_data, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_refresh_token(self):
+        logger.info(f"test_refresh_token")
+        changing_data = {
+            "refresh": self.login_response.data['refresh'],
+        }
+
+        url = reverse('token_refresh')
+        response = self.authenticated_client.post(url, changing_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data['access'])
 
 
 if __name__ == '__main__':

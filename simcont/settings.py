@@ -201,6 +201,7 @@ REST_FRAMEWORK = {
 
 
 # ************* Load Images*************************
+# File media/defaults/default_avatar.png is required
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 # ************* End Load Images*************************
