@@ -178,6 +178,10 @@ class LangUtilsTestCase(unittest.TestCase):
             self.assertNotEquals(result_dict["main_translate"], [])
             self.assertNotEquals(result_dict["extra_data"], [])
 
+    def test_get_token(self):
+        # sentence = "Apple is looking at buying U.K. startup for $1 billion"
+        # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
+        pass
 
 if __name__ == '__main__':
     unittest.main()
