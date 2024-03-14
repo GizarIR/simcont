@@ -325,8 +325,23 @@ class SimVoc:
         }
         return json.dumps(response_data, ensure_ascii=False)  # to JSON string
 
+    @staticmethod
+    def get_token(phrase: str) -> list:
+        """
+            Result of function contain list of tokens. Token is object with:
+            :text - source text of token
+            :pos_ - part of speech by Simvoc.pos_mapping
+            :dep_ - dependency between token
+            :lemma_ - base form of token
+        """
+        SimVoc.load_spacy_model()
+        doc = SimVoc.nlp_instance(phrase)
+        # print([(w.text, w.pos_ , w.lemma_, w.dep_) for w in doc])
+        return [w for w in doc]
+
 
 if __name__ == '__main__':
+
     # output_path = 'sandbox/output.txt'
     # source_path = 'sandbox/pmbok5en.pdf'
     # source_path = 'sandbox/test_article.pdf'
@@ -361,6 +376,9 @@ if __name__ == '__main__':
     # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("Hello", "ru"))  # to JSON object - dict
     # print(translated_dict)
 
-    print(f"{'*' * 15} Test G4F {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("hello", "ru", 1))  # to JSON object - dict
-    print(translated_dict)
+    # print(f"{'*' * 15} Test G4F {'*' * 15}")
+    # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("hello", "ru", 1))  # to JSON object - dict
+    # print(translated_dict)
+
+    sentence = "Apple is looking at buying U.K. startup for $1 billion"
+    print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
