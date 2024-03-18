@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.db import models
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -225,6 +226,13 @@ class Lemma(models.Model):
         choices=TranslateStatus.choices,
         default=TranslateStatus.ROOKIE,
     )
+
+    def save(self, *args, **kwargs):
+        existing_lemma = Lemma.objects.filter(lemma=self.lemma).exists()
+        if existing_lemma:
+            raise DRFValidationError("This lemma already exists. "
+                                     "Please use the existing ID instead of creating a new entry.")
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.lemma

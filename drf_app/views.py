@@ -94,6 +94,17 @@ class LemmaViewSet(viewsets.ModelViewSet):
 
     my_tags = ['Lemma']
 
+    def create(self, request, *args, **kwargs):
+        lemma_data = request.data
+        existing_lemma = Lemma.objects.filter(lemma=lemma_data.get('lemma')).exists()
+
+        if existing_lemma:
+            return Response(
+                {"detail": "This lemma already exists. Please use the existing ID instead of creating a new entry."},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
         user = self.request.user
 
