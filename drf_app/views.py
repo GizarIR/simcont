@@ -18,6 +18,8 @@ from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSe
     EducationSerializer, BoardSerializer, EducationLemmaSerializer
 from .tasks import translate_lemma_async
 
+from .langutils import SimVoc
+
 logger = logging.getLogger(__name__)
 
 
@@ -133,14 +135,20 @@ class LemmaViewSet(viewsets.ModelViewSet):
         return qs_result
 
     @action(methods=['get'], detail=True, serializer_class=TranslateLemmaSerializer)
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter(
-            'lang_to',
-            openapi.IN_QUERY,
-            description="Language code to translate to, default = ru",
-            type=openapi.TYPE_STRING
-        ),
-    ])
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'lang_to',
+                openapi.IN_QUERY,
+                description="Language code to translate to, default = ru",
+                type=openapi.TYPE_STRING),
+        ],
+        responses={
+            200: TranslateLemmaSerializer(),
+            400: 'Bad Request',
+            404: 'Not Found'
+        }
+    )
     def translate(self, request, pk=None):
         """
         For translate lemma by id using strategy.
@@ -163,6 +171,40 @@ class LemmaViewSet(viewsets.ModelViewSet):
             logger.info(f"Start process of translate lemma: {lemma.lemma}, "
                         f"with strategy: {settings.DEFAULT_STRATEGY_TRANSLATE}")
 
+        serializer = self.get_serializer(lemma)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'token',
+                openapi.IN_QUERY,
+                description="Token for check and get id lemma",
+                type=openapi.TYPE_STRING
+            ),
+        ],
+        responses={
+            200: LemmaSerializer(),
+            400: 'Bad Request',
+            404: 'Not Found'
+        }
+    )
+    @action(methods=['get'], detail=False, serializer_class=LemmaSerializer, pagination_class=None)
+    def get_id_lemma_by_token(self, request):
+        """
+        For check a lemma and get id by token (string word).
+        Params:
+        *token - token for check
+        """
+        token = request.query_params.get('token', '')
+        if not token:
+            return Response({"detail": "Bad request."}, status=status.HTTP_400_BAD_REQUEST)
+
+        checking_lemma = SimVoc.get_token(token)[0].lemma_
+        try:
+            lemma = Lemma.objects.get(lemma=checking_lemma)
+        except Lemma.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(lemma)
         return Response(serializer.data)
 
