@@ -8,6 +8,7 @@ from django.db.models.signals import post_save
 from django.urls import reverse
 from rest_framework import status
 
+from drf_app.langutils import SimVoc
 from drf_app.models import Lang, Vocabulary, Lemma, Education, Board
 from drf_app.signals import order_lemmas_create
 from drf_app.tasks import create_order_lemmas_async
@@ -45,7 +46,7 @@ class BaseViewTestCase(BaseUserCase):
             'description': 'Test Description',
             'lang_from': str(cls.lang_from.id) if cls.lang_from else 'en',
             'lang_to': str(cls.lang_to.id) if cls.lang_from else 'ru',
-            'source_text': 'Test Source Text Test',
+            'source_text': 'Tests Source Text Test',
             'author': str(cls.user.id),
             'learners_id': [str(cls.user.id)],
         }
@@ -197,6 +198,7 @@ class LemmaTests(BaseViewTestCase):
 
         url = reverse('lemma-list')
         response = self.authenticated_client.post(url, lemma_data, format='json')
+        print("!!!! ", Lemma.objects.all())
         self.assertEqual(Lemma.objects.count(), 4)
         self.assertEqual(Lemma.objects.get(pk=str(response.data['id'])).lemma, 'hello')
 
@@ -232,6 +234,17 @@ class LemmaTests(BaseViewTestCase):
         url = reverse('lemma-translate', args=[str(lemma.id)])
         response = self.authenticated_client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_id_lemma_by_token(self):
+        logger.info(f"test_get_id_lemma_by_token")
+
+        phrase = self.vocabulary_data["source_text"][:5].lower()
+        query_params = urlencode({'token': phrase})
+
+        url = reverse('lemma-get-id-lemma-by-token') + '?' + query_params
+        response = self.authenticated_client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["lemma"], SimVoc.get_token(phrase)[0].lemma_)
 
 
 class EducationTests(BaseViewTestCase):

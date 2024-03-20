@@ -179,7 +179,7 @@ class SimVoc:
         return str(clearing_text)
 
     @staticmethod
-    def create_order_lemmas(source_text: str, types: list[str] = None, cons_mode: bool = False) -> dict:
+    def create_order_lemmas(source_text: str, cons_mode: bool = False) -> dict:
         """
         Order like this:
         json {
@@ -192,28 +192,25 @@ class SimVoc:
 
         # Process the sentence using the loaded model
         # doc = nlp(source_text)
-        doc = SimVoc.nlp_instance(source_text)
+        doc = SimVoc.nlp_instance(source_text.lower())
         unsorted_result = defaultdict(int)
         doc_len = len(doc)
         if cons_mode:
             progress_bar = tqdm(total=doc_len, desc="Found lemmas...", unit="token", unit_scale=1)
             for i in range(doc_len):
+                lemma = doc[i].lemma_.strip()
+                if lemma and "\\" not in lemma:
+                    unsorted_result[doc[i].lemma_] += 1
 
-                if not types or doc[i].pos_ in types:
-                    lemma = doc[i].lemma_.strip()
-                    if lemma and "\\" not in lemma:
-                        unsorted_result[doc[i].lemma_.lower()] += 1
+                progress_bar.update(1)
+                time.sleep(0.0001)
 
-                    progress_bar.update(1)
-                    time.sleep(0.0001)
             progress_bar.close()
         else:
             for i in range(doc_len):
-
-                if not types or doc[i].pos_ in types:
-                    lemma = doc[i].lemma_.strip()
-                    if lemma and "\\" not in lemma:
-                        unsorted_result[doc[i].lemma_.lower()] += 1
+                lemma = doc[i].lemma_.strip()
+                if lemma and "\\" not in lemma:
+                    unsorted_result[doc[i].lemma_] += 1
 
         order_lemmas = dict(sorted(unsorted_result.items(), key=lambda item: item[1], reverse=True))
 

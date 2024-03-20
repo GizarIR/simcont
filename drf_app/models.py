@@ -229,9 +229,10 @@ class Lemma(models.Model):
 
     def save(self, *args, **kwargs):
         existing_lemma = Lemma.objects.filter(lemma=self.lemma).exists()
-        if existing_lemma:
-            raise DRFValidationError("This lemma already exists. "
-                                     "Please use the existing ID instead of creating a new entry.")
+        if not self.pk:  # only create (not update)
+            if existing_lemma:
+                raise DRFValidationError("This lemma already exists. "
+                                         "Please use the existing ID instead of creating a new entry.")
         super().save(*args, **kwargs)
 
     def __str__(self):

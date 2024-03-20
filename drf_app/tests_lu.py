@@ -111,12 +111,11 @@ class LangUtilsTestCase(unittest.TestCase):
 
     def test_create_order_lemmas(self):
         logger.info(f"test_create_order_lemmas")
-        source_text = "This is a sample nice sentence This comes another sentences"
-        types = ["NOUN", "VERB", "ADJ"]
+        source_text = "tests Source Text Test"
         cons_mode = False
 
-        result = SimVoc.create_order_lemmas(source_text, types, cons_mode)
-        expected_result = {'sentence': 2, 'sample': 1, 'nice': 1, 'come': 1}
+        result = SimVoc.create_order_lemmas(source_text)
+        expected_result = {'test': 2, 'source': 1, 'text': 1}
 
         self.assertEqual(result, expected_result)
 
