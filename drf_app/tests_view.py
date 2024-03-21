@@ -198,9 +198,17 @@ class LemmaTests(BaseViewTestCase):
 
         url = reverse('lemma-list')
         response = self.authenticated_client.post(url, lemma_data, format='json')
-        print("!!!! ", Lemma.objects.all())
         self.assertEqual(Lemma.objects.count(), 4)
         self.assertEqual(Lemma.objects.get(pk=str(response.data['id'])).lemma, 'hello')
+
+        # check: is there this lemma in Lemma's model
+        response = self.authenticated_client.post(url, lemma_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'This lemma already exists. Please use the existing ID instead of creating a new entry.'
+        )
+
 
     def test_delete_lemma(self):
         logger.info(f"test_delete_lemma")
