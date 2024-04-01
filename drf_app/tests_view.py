@@ -209,7 +209,6 @@ class LemmaTests(BaseViewTestCase):
             'This lemma already exists. Please use the existing ID instead of creating a new entry.'
         )
 
-
     def test_delete_lemma(self):
         logger.info(f"test_delete_lemma")
         lemma_data = {
