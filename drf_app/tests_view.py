@@ -10,11 +10,12 @@ from rest_framework import status
 
 from drf_app.langutils import SimVoc
 from drf_app.models import Lang, Vocabulary, Lemma, Education, Board
-from drf_app.signals import order_lemmas_create
-from drf_app.tasks import create_order_lemmas_async
+from drf_app.signals import order_lemmas_create, translate_lemma_signal
+from drf_app.tasks import create_order_lemmas_async, translate_lemma_async
 
 import logging
 
+from drf_app.views import LemmaViewSet
 from users.tests import BaseUserCase
 
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
@@ -184,7 +185,6 @@ class LemmaTests(BaseViewTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # TODO add check created lemma, is there this lemma in vocabulary
     def test_create_lemma(self):
         logger.info(f"test_create_lemma")
         lemma_data = {
@@ -235,12 +235,13 @@ class LemmaTests(BaseViewTestCase):
         logger.info(f"test_translate_lemma")
         lemma = Lemma.objects.all().first()
 
-        # TODO create new version use translate lemma with Signals for organize whole testing strategy
-        # post_save.disconnect(get_translate_lemma, sender=Lemma)
+        post_save.disconnect(translate_lemma_signal, sender=LemmaViewSet)
 
         url = reverse('lemma-translate', args=[str(lemma.id)])
         response = self.authenticated_client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        post_save.connect(translate_lemma_signal, sender=LemmaViewSet)
 
     def test_get_id_lemma_by_token(self):
         logger.info(f"test_get_id_lemma_by_token")

@@ -16,7 +16,8 @@ from simcont import settings
 from .models import Vocabulary, Lemma, Lang, VocabularyLemma, Education, Board, EducationLemma
 from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSerializer, LanguageSerializer, \
     EducationSerializer, BoardSerializer, EducationLemmaSerializer
-from .tasks import translate_lemma_async
+from .signals import translate_lemma_signal
+# from .tasks import translate_lemma_async
 
 from .langutils import SimVoc
 
@@ -163,11 +164,14 @@ class LemmaViewSet(viewsets.ModelViewSet):
         lang_to = request.query_params.get('lang_to', 'ru')
 
         if lemma.translate_status == Lemma.TranslateStatus.ROOKIE:
+            translate_lemma_signal.send(sender=self.__class__, lemma=lemma, lang_to=lang_to)
+
             # Task for Celery
-            translate_lemma_async.apply_async(
-                args=[lemma.pk, settings.DEFAULT_STRATEGY_TRANSLATE, lang_to],
-                countdown=0
-            )
+            # translate_lemma_async.apply_async(
+            #     args=[lemma.pk, settings.DEFAULT_STRATEGY_TRANSLATE, lang_to],
+            #     countdown=0
+            # )
+
             logger.info(f"Start process of translate lemma: {lemma.lemma}, "
                         f"with strategy: {settings.DEFAULT_STRATEGY_TRANSLATE}")
 
