@@ -137,11 +137,15 @@ class VocabularyViewSet(viewsets.ModelViewSet):
         value = request.data.get('frequency', 0)
 
         if request.method == 'POST':
-            lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value})
-            lemma.save()
-            qs_lemma_for_voc = VocabularyLemma.objects.filter(
-                Q(throughLemma=lemma) & Q(throughVocabulary=vocabulary))
-            lemma_voc = qs_lemma_for_voc[0]
+            if not VocabularyLemma.objects.filter(Q(throughLemma=lemma) & Q(throughVocabulary=vocabulary)).exists():
+                lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value})
+                lemma.save()
+                qs_lemma_for_voc = VocabularyLemma.objects.filter(
+                    Q(throughLemma=lemma) & Q(throughVocabulary=vocabulary))
+                lemma_voc = qs_lemma_for_voc[0]
+            else:
+                return Response({"detail": "Lemma for exactly Vocabulary exist, use method PATCH ."},
+                                status=status.HTTP_400_BAD_REQUEST)
 
         else:  # elif request.method == 'PATCH':
             qs_lemma_for_voc = VocabularyLemma.objects.filter(
