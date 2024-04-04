@@ -2,7 +2,7 @@ import json
 
 from drf_yasg import openapi
 from rest_framework import serializers
-from .models import Vocabulary, Lemma, Lang, Education, Board, EducationLemma
+from .models import Vocabulary, Lemma, Lang, Education, Board, EducationLemma, VocabularyLemma
 
 from users.serializers import LearnerSerializer
 from users.models import CustomUser
@@ -212,3 +212,10 @@ class EducationLemmaSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationLemma
         fields = ('id', 'throughEducation', 'throughLemma', 'status')
+
+
+class VocabularyLemmaSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = VocabularyLemma
+        fields = ('id', 'throughVocabulary', 'throughLemma', 'frequency')

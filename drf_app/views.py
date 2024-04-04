@@ -1,3 +1,5 @@
+import uuid
+
 import logging
 
 from django.db.models import Q
@@ -15,7 +17,7 @@ from rest_framework.viewsets import GenericViewSet
 from simcont import settings
 from .models import Vocabulary, Lemma, Lang, VocabularyLemma, Education, Board, EducationLemma
 from .serializers import VocabularySerializer, LemmaSerializer, TranslateLemmaSerializer, LanguageSerializer, \
-    EducationSerializer, BoardSerializer, EducationLemmaSerializer
+    EducationSerializer, BoardSerializer, EducationLemmaSerializer, VocabularyLemmaSerializer
 from .signals import translate_lemma_signal
 # from .tasks import translate_lemma_async
 
@@ -87,6 +89,73 @@ class VocabularyViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = self.get_serializer(lang)
+        return Response(serializer.data)
+
+    @action(methods=['post', 'patch'], detail=True, serializer_class=VocabularyLemmaSerializer)
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['id_lemma', 'frequency'],
+            properties={
+                'id_lemma': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Lemma's UUID for add to vocabulary"
+                ),
+                'frequency': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description="Frequency (weight) lemma in vocabulary",
+                    default=0,
+                ),
+            },
+        ),
+        responses={
+            200: VocabularyLemmaSerializer(),
+            400: 'Bad Request',
+            404: 'Not Found'
+        }
+    )
+    def lemma(self, request, pk=None):
+        """
+        Add or update lemma in vocabulary.
+        Params:
+        *pk - vocabulary's UUID for add lemma
+        *id_lemma - lemma's UUID which add to vocabulary
+        *frequency - frequency (weight) lemma in vocabulary
+        """
+        try:
+            vocabulary = Vocabulary.objects.get(pk=pk)
+        except Vocabulary.DoesNotExist:
+            return Response({"detail": "Not found vocabulary."}, status=status.HTTP_404_NOT_FOUND)
+
+        id_lemma = request.data.get('id_lemma', None)
+
+        try:
+            lemma = Lemma.objects.get(pk=uuid.UUID(id_lemma))
+        except Vocabulary.DoesNotExist:
+            return Response({"detail": "Not found lemma."}, status=status.HTTP_404_NOT_FOUND)
+
+        value = request.data.get('frequency', 0)
+
+        if request.method == 'POST':
+            lemma.vocabularies.add(vocabulary, through_defaults={"frequency": value})
+            lemma.save()
+            qs_lemma_for_voc = VocabularyLemma.objects.filter(
+                Q(throughLemma=lemma) & Q(throughVocabulary=vocabulary))
+            lemma_voc = qs_lemma_for_voc[0]
+
+        else:  # elif request.method == 'PATCH':
+            qs_lemma_for_voc = VocabularyLemma.objects.filter(
+                Q(throughLemma=lemma) & Q(throughVocabulary=vocabulary))
+
+            if not qs_lemma_for_voc:
+                return Response({"detail": "Not found Lemma for exactly Vocabulary."},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            lemma_voc = qs_lemma_for_voc[0]
+            lemma_voc.frequency = value
+            lemma_voc.save()
+
+        serializer = self.get_serializer(lemma_voc)
         return Response(serializer.data)
 
 
@@ -184,7 +253,7 @@ class LemmaViewSet(viewsets.ModelViewSet):
                 'token',
                 openapi.IN_QUERY,
                 description="Token for check and get id lemma",
-                type=openapi.TYPE_STRING
+                type=openapi.TYPE_STRING,
             ),
         ],
         responses={
