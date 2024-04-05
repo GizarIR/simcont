@@ -135,6 +135,21 @@ class VocabularyTests(BaseViewTestCase):
         response = self.authenticated_client.patch(url, {'is_active': True}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_post_vocabulary_lemma(self):
+        logger.info(f"test_post_vocabulary_lemma")
+
+        lemma = Lemma.objects.create(lemma="hello")
+        changing_data = {
+            'id_lemma': str(lemma.pk),
+            'frequency': 100
+        }
+
+        url = reverse('vocabulary-lemma', args=[str(self.created_vocabulary.id)])
+        response = self.authenticated_client.post(url, changing_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["throughLemma"], lemma.pk)
+
 
 class LemmaTests(BaseViewTestCase):
     """
