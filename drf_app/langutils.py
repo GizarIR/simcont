@@ -251,9 +251,10 @@ class SimVoc:
         response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
+    # TODO need to fix ERROR in strategy_get_translate_g4f
     @staticmethod
     def strategy_get_translate_g4f(text_to_translate: str, lang_to: str, num_extra_translate: int = 1) -> str:
-        # g4f.debug.logging = True  # Enable debug logging
+        g4f.debug.logging = True  # Enable debug logging
         g4f.debug.version_check = False  # Disable automatic version checking
         # print(g4f.Provider.Bing.params)  # Print supported args for Bing
         prompt_to_ai = (
@@ -281,9 +282,10 @@ class SimVoc:
         )
 
         response = response.strip()
+        logger.info(response)
         response_str = response[response.find('main_translate')-2:response.find('}')+1]
-        response_str = response_str.replace('\n', '')
-        # logger.info(response_str)
+        response_str = "{" + response_str.replace('\n', '')
+        logger.info(response_str)
         response_data = json.loads(response_str)
         response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
@@ -373,9 +375,9 @@ if __name__ == '__main__':
     # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("Hello", "ru"))  # to JSON object - dict
     # print(translated_dict)
 
-    # print(f"{'*' * 15} Test G4F {'*' * 15}")
-    # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("hello", "ru", 1))  # to JSON object - dict
-    # print(translated_dict)
+    print(f"{'*' * 15} Test G4F {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("hello", "ru", 1))  # to JSON object - dict
+    print(translated_dict)
 
-    sentence = "Apple is looking at buying U.K. startup for $1 billion"
-    print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
+    # sentence = "Apple is looking at buying U.K. startup for $1 billion"
+    # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
