@@ -16,6 +16,7 @@ import openai
 
 # https://github.com/xtekky/gpt4free?tab=readme-ov-file#-getting-started
 import g4f
+from g4f.client import Client
 
 # https://spacy.io/usage
 import spacy
@@ -251,7 +252,26 @@ class SimVoc:
         response_data["user_inf"] = []
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
+
+    @staticmethod
+    def create_translate_json(main_translate: list, extra_data: list = None, user_inf: list = None):
+
+        return json.dumps(
+            {
+                "main_translate": main_translate,
+                "extra_data": [] if not extra_data else extra_data,
+                "user_ing": [] if not user_inf else user_inf
+            }
+        )
+
     # TODO need to fix ERROR in strategy_get_translate_g4f
+    #  https://github.com/xtekky/gpt4free/blob/main/README.md
+    #  need to check using different Providers like this:
+    #  from g4f.Provider import BingCreateImages, OpenaiChat, Gemini
+    #  async def main():
+    #      client = AsyncClient(
+    #          provider=OpenaiChat,
+    #  or https://github.com/xtekky/gpt4free/blob/main/docs/legacy.md
     @staticmethod
     def strategy_get_translate_g4f(text_to_translate: str, lang_to: str, num_extra_translate: int = 1) -> str:
         g4f.debug.logging = True  # Enable debug logging
@@ -266,8 +286,18 @@ class SimVoc:
             "}}"
         )
 
-        response = g4f.ChatCompletion.create(
-            model=g4f.models.gpt_4,
+        client = Client()
+        # response = client.chat.completions.create(
+        #     model="gpt-3.5-turbo",
+        #     messages=[{"role": "user", "content": "Hello"}],
+        #     ...
+        # )
+        # print(response.choices[0].message.content)
+
+        # response = g4f.ChatCompletion.create(
+        response = client.chat.completions.create(
+            model=g4f.models.gpt_35_turbo,
+            provider=g4f.Provider.ChatForAi,
             messages=[
                 {"role": "user",
                  "content": prompt_to_ai.format(
@@ -288,7 +318,12 @@ class SimVoc:
         logger.info(response_str)
         response_data = json.loads(response_str)
         response_data["user_inf"] = []
-        return json.dumps(response_data, ensure_ascii=False)  # JSON string
+        # return json.dumps(response_data, ensure_ascii=False)  # JSON string
+        return SimVoc.create_translate_json(
+            response_data["main_translate"],
+            response_data["extra_data"],
+            response_data["user_inf"],
+        )
 
     @staticmethod
     def strategy_get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
@@ -376,7 +411,7 @@ if __name__ == '__main__':
     # print(translated_dict)
 
     print(f"{'*' * 15} Test G4F {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("hello", "ru", 1))  # to JSON object - dict
+    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("orange", "ru", 1))  # to JSON object - dict
     print(translated_dict)
 
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
