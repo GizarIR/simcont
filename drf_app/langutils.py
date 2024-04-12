@@ -20,6 +20,7 @@ from g4f.client import Client
 
 # https://spacy.io/usage
 import spacy
+from random_word import RandomWords
 
 # https://gtts.readthedocs.io/en/latest/index.html
 # from gtts import gTTS
@@ -217,6 +218,17 @@ class SimVoc:
 
         return order_lemmas
 
+    @staticmethod
+    def create_translation_json(main_translate: list, extra_data: list = None, user_inf: list = None):
+
+        return json.dumps(
+            {
+                "main_translate": main_translate,
+                "extra_data": [] if not extra_data else extra_data,
+                "user_ing": [] if not user_inf else user_inf
+            }
+        )
+
     # TODO need add handle of Errors when strategy func get wrong data in response
     @staticmethod
     def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num_extra_translate: int = 1) -> str:
@@ -253,17 +265,6 @@ class SimVoc:
         return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
 
-    @staticmethod
-    def create_translate_json(main_translate: list, extra_data: list = None, user_inf: list = None):
-
-        return json.dumps(
-            {
-                "main_translate": main_translate,
-                "extra_data": [] if not extra_data else extra_data,
-                "user_ing": [] if not user_inf else user_inf
-            }
-        )
-
     # TODO need to fix ERROR in strategy_get_translate_g4f
     #  https://github.com/xtekky/gpt4free/blob/main/README.md
     #  need to check using different Providers like this:
@@ -278,26 +279,26 @@ class SimVoc:
         g4f.debug.version_check = False  # Disable automatic version checking
         # print(g4f.Provider.Bing.params)  # Print supported args for Bing
         prompt_to_ai = (
-            "Переведи на {} слово {} с не больше {} дополнительных значений "
-            "в формате:"
+            "Translate to {} word {} with no more {} additional meanings "
+            "in the format:"
             "{{"
-            "\"main_translate\": [ \"{}\", \"произношение\", \"перевод\", \"часть речи в UP Tags\"],"
-            "\"extra_data\": [[ \"{}\", \"перевод\", \"часть речи\"], ...]"
+            "\"main_translate\": [ \"{}\", \"origin_pronunciation\", \"translation\", \"part of speech by UP Tags\"],"
+            "\"extra_data\": [[ \"{}\", \"translation\", \"part of speech\"], ...]"
             "}}"
         )
 
-        client = Client()
+        # client = Client()
         # response = client.chat.completions.create(
         #     model="gpt-3.5-turbo",
+        #     provider=g4f.Provider.ChatForAi #This param can be change
         #     messages=[{"role": "user", "content": "Hello"}],
         #     ...
         # )
         # print(response.choices[0].message.content)
 
-        # response = g4f.ChatCompletion.create(
-        response = client.chat.completions.create(
-            model=g4f.models.gpt_35_turbo,
-            provider=g4f.Provider.ChatForAi,
+        response = g4f.ChatCompletion.create(
+            model=g4f.models.gpt_4,
+            # provider=g4f.Provider.You,
             messages=[
                 {"role": "user",
                  "content": prompt_to_ai.format(
@@ -312,14 +313,14 @@ class SimVoc:
         )
 
         response = response.strip()
-        logger.info(response)
+        # logger.info(response)
         response_str = response[response.find('main_translate')-2:response.find('}')+1]
         response_str = "{" + response_str.replace('\n', '')
-        logger.info(response_str)
+        # logger.info(response_str)
         response_data = json.loads(response_str)
         response_data["user_inf"] = []
         # return json.dumps(response_data, ensure_ascii=False)  # JSON string
-        return SimVoc.create_translate_json(
+        return SimVoc.create_translation_json(
             response_data["main_translate"],
             response_data["extra_data"],
             response_data["user_inf"],
@@ -406,13 +407,17 @@ if __name__ == '__main__':
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'NOUN'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    # print(f"{'*' * 15} Test GT {'*' * 15}")
-    # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("Hello", "ru"))  # to JSON object - dict
-    # print(translated_dict)
+    print(f"{'*' * 15} Test GT {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("Hello", "ru"))  # to JSON object - dict
+    print(translated_dict)
+
+    r = RandomWords()
+    random_word = r.get_random_word()
 
     print(f"{'*' * 15} Test G4F {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f("orange", "ru", 1))  # to JSON object - dict
+    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f(random_word, "ru", 1))  # to JSON object - dict
     print(translated_dict)
+
 
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
