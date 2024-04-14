@@ -356,19 +356,17 @@ class SimVoc:
 
         # Get POS
         pos_tags = [(token.text, token.pos_) for token in doc]
-        # TODO need use create_translation_json
-        response_data = {
-            "main_translate": [
+
+        return SimVoc.create_translation_json(
+            [
                 translated.origin,
-                translated.extra_data['origin_pronunciation'],  # TODO need check pronunciation in response
+                translated.extra_data['origin_pronunciation'],
                 translated.text,
                 SimVoc.pos_mapping.get(pos_tags[0][1], 'X'),
             ],
-            "extra_data": [],
-            "users_inf": []
-        }
-        return json.dumps(response_data, ensure_ascii=False)  # to JSON string
-
+            [],
+            [],
+        )
     @staticmethod
     def get_token(phrase: str) -> list:
         """
@@ -416,15 +414,15 @@ if __name__ == '__main__':
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
     print(f"{'*' * 15} Test GT {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("vibrance", "ru"))  # to JSON object - dict
+    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("paper", "ru"))  # to JSON object - dict
     print(translated_dict)
 
-    r = RandomWords()
-    random_word = r.get_random_word()
-
-    print(f"{'*' * 15} Test G4F {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_g4f(random_word, "ru", 1))  # to JSON object - dict
-    print(translated_dict)
+    # r = RandomWords()
+    # random_word = r.get_random_word()
+    #
+    # print(f"{'*' * 15} Test G4F {'*' * 15}")
+    # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f(random_word, "ru", 1))  # to JSON object - dict
+    # print(translated_dict)
 
 
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
