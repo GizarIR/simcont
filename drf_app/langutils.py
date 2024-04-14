@@ -242,7 +242,6 @@ class SimVoc:
     # TODO need add handle of Errors when strategy func get wrong data in response
     # @staticmethod
     # def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num_extra_translate: int = 1) -> str:
-    #     # TODO need to translate promt_to_ai to Eng for support different languages
     #     # prompt_to_ai = (
     #     #     "Переведи на {} слово {} с не больше {} дополнительных значений "
     #     #     "в формате:"
@@ -367,10 +366,11 @@ class SimVoc:
             [],
             [],
         )
+
     @staticmethod
     def get_token(phrase: str) -> list:
         """
-            Result of function contain list of tokens. Token is object with:
+            Result of function contain list of tokens. Token is an object with:
             :text - source text of token
             :pos_ - part of speech by Simvoc.pos_mapping
             :dep_ - dependency between token

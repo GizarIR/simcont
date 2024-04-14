@@ -23,6 +23,12 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
 
+  libretranslate:
+    image: "libretranslate/libretranslate:latest"
+    ports:
+      - "5010:5000"
+#    command: ["--port", "5010"]
+
 
 #  pgadmin:
 #    container_name: simcont_pgadmin
