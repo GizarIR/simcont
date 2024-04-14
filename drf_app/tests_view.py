@@ -8,12 +8,14 @@ from django.db.models.signals import post_save
 from django.urls import reverse
 from rest_framework import status
 
+from drf_app.langutils import SimVoc
 from drf_app.models import Lang, Vocabulary, Lemma, Education, Board
-from drf_app.signals import order_lemmas_create
-from drf_app.tasks import create_order_lemmas_async
+from drf_app.signals import order_lemmas_create, translate_lemma_signal
+from drf_app.tasks import create_order_lemmas_async, translate_lemma_async
 
 import logging
 
+from drf_app.views import LemmaViewSet
 from users.tests import BaseUserCase
 
 if 'DJANGO_SETTINGS_MODULE' in os.environ:
@@ -45,7 +47,7 @@ class BaseViewTestCase(BaseUserCase):
             'description': 'Test Description',
             'lang_from': str(cls.lang_from.id) if cls.lang_from else 'en',
             'lang_to': str(cls.lang_to.id) if cls.lang_from else 'ru',
-            'source_text': 'Test Source Text Test',
+            'source_text': 'Tests Source Text Test',
             'author': str(cls.user.id),
             'learners_id': [str(cls.user.id)],
         }
@@ -133,6 +135,36 @@ class VocabularyTests(BaseViewTestCase):
         response = self.authenticated_client.patch(url, {'is_active': True}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_post_vocabulary_lemma(self):
+        logger.info(f"test_post_vocabulary_lemma")
+
+        lemma = Lemma.objects.create(lemma="hello")
+        changing_data = {
+            'id_lemma': str(lemma.pk),
+            'frequency': 100
+        }
+
+        url = reverse('vocabulary-lemma', args=[str(self.created_vocabulary.id)])
+        response = self.authenticated_client.post(url, changing_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["throughLemma"], lemma.pk)
+
+    def test_patch_vocabulary_lemma(self):
+        logger.info(f"test_patch_vocabulary_lemma")
+
+        lemma = Lemma.objects.first()
+        changing_data = {
+            'id_lemma': str(lemma.pk),
+            'frequency': 100
+        }
+
+        url = reverse('vocabulary-lemma', args=[str(self.created_vocabulary.id)])
+        response = self.authenticated_client.patch(url, changing_data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["frequency"], changing_data["frequency"])
+
 
 class LemmaTests(BaseViewTestCase):
     """
@@ -183,7 +215,6 @@ class LemmaTests(BaseViewTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # TODO add check created lemma, is there this lemma in vocabulary
     def test_create_lemma(self):
         logger.info(f"test_create_lemma")
         lemma_data = {
@@ -199,6 +230,14 @@ class LemmaTests(BaseViewTestCase):
         response = self.authenticated_client.post(url, lemma_data, format='json')
         self.assertEqual(Lemma.objects.count(), 4)
         self.assertEqual(Lemma.objects.get(pk=str(response.data['id'])).lemma, 'hello')
+
+        # check: is there this lemma in Lemma's model
+        response = self.authenticated_client.post(url, lemma_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'],
+            'This lemma already exists. Please use the existing ID instead of creating a new entry.'
+        )
 
     def test_delete_lemma(self):
         logger.info(f"test_delete_lemma")
@@ -226,12 +265,24 @@ class LemmaTests(BaseViewTestCase):
         logger.info(f"test_translate_lemma")
         lemma = Lemma.objects.all().first()
 
-        # TODO create new version use translate lemma with Signals for organize whole testing strategy
-        # post_save.disconnect(get_translate_lemma, sender=Lemma)
+        post_save.disconnect(translate_lemma_signal, sender=LemmaViewSet)
 
         url = reverse('lemma-translate', args=[str(lemma.id)])
         response = self.authenticated_client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        post_save.connect(translate_lemma_signal, sender=LemmaViewSet)
+
+    def test_get_id_lemma_by_token(self):
+        logger.info(f"test_get_id_lemma_by_token")
+
+        phrase = self.vocabulary_data["source_text"][:5].lower()
+        query_params = urlencode({'token': phrase})
+
+        url = reverse('lemma-get-id-lemma-by-token') + '?' + query_params
+        response = self.authenticated_client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["lemma"], SimVoc.get_token(phrase)[0].lemma_)
 
 
 class EducationTests(BaseViewTestCase):
