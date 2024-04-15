@@ -27,7 +27,7 @@ services:
     image: "libretranslate/libretranslate:latest"
     ports:
       - "5010:5000"
-#    command: ["--port", "5010"]
+    command: ["--host", "127.0.0.1"]
 
 
 #  pgadmin:
