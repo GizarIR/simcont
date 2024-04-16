@@ -23,11 +23,24 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
 
+
   libretranslate:
-    image: "libretranslate/libretranslate:latest"
+    container_name: libretranslate
+    image: libretranslate/libretranslate:latest
+    restart: unless-stopped
     ports:
-      - "5010:5000"
-    command: ["--host", "127.0.0.1"]
+      - 5000:5000
+    healthcheck:
+      test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
+    tty: true
+    environment:
+      LT_FRONTEND_LANGUAGE_SOURCE: 'en'
+      LT_FRONTEND_LANGUAGE_TARGET: 'ru'
+      LT_SUGGESTIONS: true
+      LT_DEBUG: true
+      LT_LOAD_ONLY: en,ru
+    volumes:
+      - ./libretranslate_data/argos-translate:/home/libretranslate/.local/share/argos-translate
 
 
 #  pgadmin:

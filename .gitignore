@@ -1,6 +1,7 @@
 media/avatars/
 sandbox/
 default_database_data/
+libretranslate_data/
 pgadmin_data/
 .env
 .DS_Store
