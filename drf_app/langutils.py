@@ -367,6 +367,21 @@ class SimVoc:
             [],
         )
 
+    # use library Requests https://docs.python-requests.org/en/latest/user/quickstart/
+    @staticmethod
+    def strategy_get_translate_libretranslate(text_to_translate: str, lang_to: str, lang_from: str = "ru") -> str:
+        """
+            For work well you need specific version googletrans==4.0.0-rc1
+            Translate text_to_translate using FREE googletrans service
+            :param text_to_translate:  word which you need to translate
+            :type text_to_translate: string
+            :param lang_to: language which you want to get translate
+            :type lang_to: string, limit 2 symbols, for example - 'ru', 'en', 'de'
+            :param lang_from: language from you want to get translate
+            :type lang_from: string, limit 2 symbols, for example - 'ru', 'en', 'de'
+        """
+        pass
+
     @staticmethod
     def get_token(phrase: str) -> list:
         """
