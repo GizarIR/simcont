@@ -9,6 +9,7 @@ from enum import Enum
 from typing import Any
 
 import pdfplumber
+import requests
 from googletrans import Translator, LANGUAGES
 
 # https://platform.openai.com/docs/quickstart?context=python
@@ -239,6 +240,21 @@ class SimVoc:
             ensure_ascii=False
         )
 
+    @staticmethod
+    def get_token(phrase: str) -> list:
+        """
+            Result of function contain list of tokens. Token is an object with:
+            :text - source text of token
+            :pos_ - part of speech by Simvoc.pos_mapping
+            :dep_ - dependency between token
+            :lemma_ - base form of token
+        """
+        SimVoc.load_spacy_model()
+        doc = SimVoc.nlp_instance(phrase)
+        # print([(w.text, w.pos_ , w.lemma_, w.dep_) for w in doc])
+        return [w for w in doc]
+
+
     # TODO need add handle of Errors when strategy func get wrong data in response
     # @staticmethod
     # def strategy_get_translate_chatgpt(text_to_translate: str, lang_to: str,  num_extra_translate: int = 1) -> str:
@@ -369,7 +385,7 @@ class SimVoc:
 
     # use library Requests https://docs.python-requests.org/en/latest/user/quickstart/
     @staticmethod
-    def strategy_get_translate_libretranslate(text_to_translate: str, lang_to: str, lang_from: str = "ru") -> str:
+    def strategy_get_translate_libretranslate(text_to_translate: str, lang_to: str, lang_from: str = "en") -> str:
         """
             For work well you need specific version googletrans==4.0.0-rc1
             Translate text_to_translate using FREE googletrans service
@@ -380,21 +396,43 @@ class SimVoc:
             :param lang_from: language from you want to get translate
             :type lang_from: string, limit 2 symbols, for example - 'ru', 'en', 'de'
         """
-        pass
+        url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
-    @staticmethod
-    def get_token(phrase: str) -> list:
-        """
-            Result of function contain list of tokens. Token is an object with:
-            :text - source text of token
-            :pos_ - part of speech by Simvoc.pos_mapping
-            :dep_ - dependency between token
-            :lemma_ - base form of token
-        """
-        SimVoc.load_spacy_model()
-        doc = SimVoc.nlp_instance(phrase)
-        # print([(w.text, w.pos_ , w.lemma_, w.dep_) for w in doc])
-        return [w for w in doc]
+        payload = {
+            "q": text_to_translate,
+            "source": lang_from,
+            "target": lang_to,
+        }
+
+        try:
+            response = requests.post(url, data=payload)
+
+            if response.status_code == 200:
+                logger.debug(f'The request was completed successfully. Response from the server: {response.text}')
+                result = SimVoc.create_translation_json(
+                    [
+                        text_to_translate,
+                        None,
+                        response.json().get("translatedText"),
+                        SimVoc.pos_mapping.get(SimVoc.get_token(text_to_translate)[0].pos_, 'X'),
+                    ],
+                    [],
+                    [],
+                )
+            else:
+                logger.debug(f'Occurred error! Status code: {response.status_code}')
+                logger.debug(f'Response from server: {response.text}')
+                result = json.dumps({
+                    "error": f'Status code: {response.status_code}, response from server: {response.text}'
+                })
+
+        except requests.exceptions.RequestException as e:
+            logger.info(f'An error occurred while executing the request: {e}')
+            result = json.dumps({
+                "error": f'An error occurred while executing the request: {e}'
+            })
+
+        return result
 
 
 if __name__ == '__main__':
@@ -428,9 +466,9 @@ if __name__ == '__main__':
     # { 'main_translate': ['orange', 'ˈɒrɪndʒ', 'апельсин', 'NOUN'],
     # 'extra_main': [['orange', 'оранжевый', 'прилагательное'], ['orange', 'оранжевый цвет', 'существительное']]}
 
-    print(f"{'*' * 15} Test GT {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("paper", "ru"))  # to JSON object - dict
-    print(translated_dict)
+    # print(f"{'*' * 15} Test GT {'*' * 15}")
+    # translated_dict = json.loads(SimVoc.strategy_get_translate_gtrans("paper", "ru"))  # to JSON object - dict
+    # print(translated_dict)
 
     # r = RandomWords()
     # random_word = r.get_random_word()
@@ -438,6 +476,10 @@ if __name__ == '__main__':
     # print(f"{'*' * 15} Test G4F {'*' * 15}")
     # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f(random_word, "ru", 1))  # to JSON object - dict
     # print(translated_dict)
+
+    print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_libretranslate("paper", "ru", "en"))  # to JSON object - dict
+    print(translated_dict)
 
 
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
