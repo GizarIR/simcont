@@ -24,6 +24,7 @@ import g4f
 import spacy
 from random_word import RandomWords
 
+
 # https://gtts.readthedocs.io/en/latest/index.html
 # from gtts import gTTS
 
@@ -76,6 +77,7 @@ class SimVoc:
     SPACY_MODEL = "en_core_web_sm"
     NLP_MAX_LENGTH = int(settings.NLP_MAX_LENGTH)
     nlp_instance = None
+
     prompt_to_ai = (
         "Translate to {} word {} with no more {} additional meanings "
         "in the format:"
@@ -229,13 +231,20 @@ class SimVoc:
         return order_lemmas
 
     @staticmethod
-    def create_translation_json(main_translate: list, extra_data: list = None, user_inf: list = None):
+    def create_translation_json(
+            main_translate: list,
+            extra_data: list = None,
+            user_inf: list = None,
+            lang_from: str = "en"):
+
+        if lang_from == "en" and main_translate[1] is None:
+            main_translate[1] = 'TEST_PASS'
 
         return json.dumps(
             {
                 "main_translate": main_translate,
                 "extra_data": [] if not extra_data else extra_data,
-                "user_inf": [] if not user_inf else user_inf
+                "users_inf": [] if not user_inf else user_inf
             },
             ensure_ascii=False
         )
@@ -476,11 +485,15 @@ if __name__ == '__main__':
     # print(f"{'*' * 15} Test G4F {'*' * 15}")
     # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f(random_word, "ru", 1))  # to JSON object - dict
     # print(translated_dict)
-
-    print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_libretranslate("paper", "ru", "en"))  # to JSON object - dict
-    print(translated_dict)
-
+    #
 
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
+
+    test_token = SimVoc.get_token("orange")
+    print(test_token[0].pos_)
+
+    print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
+    translated_dict = json.loads(SimVoc.strategy_get_translate_libretranslate("orange", "ru", "en"))  # to JSON object - dict
+    print(translated_dict)
+
