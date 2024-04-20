@@ -22,6 +22,8 @@ import g4f
 
 # https://spacy.io/usage
 import spacy
+import nltk
+from nltk.corpus import wordnet
 from random_word import RandomWords
 
 
@@ -77,6 +79,8 @@ class SimVoc:
     SPACY_MODEL = "en_core_web_sm"
     NLP_MAX_LENGTH = int(settings.NLP_MAX_LENGTH)
     nlp_instance = None
+    nltk_data_path = os.path.join(settings.BASE_DIR, 'nltk_data')
+    wordnet_path = os.path.join(nltk_data_path, 'corpora', 'wordnet')
 
     prompt_to_ai = (
         "Translate to {} word {} with no more {} additional meanings "
@@ -106,6 +110,13 @@ class SimVoc:
         "SPACE": PartSpeech.SPACE,
         "SYM": PartSpeech.SYM,
         "VERB": PartSpeech.VERB
+    }
+
+    pos_mapping_nltk = {
+        "a": PartSpeech.ADJ,
+        "r": PartSpeech.ADV,
+        "v": PartSpeech.VERB,
+        "n": PartSpeech.NOUN,
     }
 
     def __init__(
@@ -140,6 +151,11 @@ class SimVoc:
         if cls.nlp_instance is None:
             cls.nlp_instance = spacy.load(cls.SPACY_MODEL)
             cls.nlp_instance.max_length = cls.NLP_MAX_LENGTH
+
+    @staticmethod
+    def download_wordnet():
+        nltk.data.path.append(SimVoc.nltk_data_path)
+        nltk.download('wordnet', download_dir=SimVoc.nltk_data_path)
 
     @staticmethod
     def print_order_lemmas_console(lemmas_dict: dict, limit: int = 1) -> Any:
@@ -262,6 +278,21 @@ class SimVoc:
         doc = SimVoc.nlp_instance(phrase)
         # print([(w.text, w.pos_ , w.lemma_, w.dep_) for w in doc])
         return [w for w in doc]
+
+    @staticmethod
+    def get_word_pos(word):
+        path_to_wordnet = os.path.join(SimVoc.nltk_data_path, 'corpora', 'wordnet.zip')
+        print("Path to WordNet:", path_to_wordnet)
+        if not os.path.isfile(path_to_wordnet):
+            print("Downloading WordNet...")
+            SimVoc.download_wordnet()
+
+        synsets = wordnet.synsets(word)
+        pos = set()
+        for synset in synsets:
+            # pos.update({SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value})
+            pos.update({synset.pos()})
+        return pos
 
 
     # TODO need add handle of Errors when strategy func get wrong data in response
@@ -490,10 +521,15 @@ if __name__ == '__main__':
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
-    test_token = SimVoc.get_token("orange")
-    print(test_token[0].pos_)
+    nltk.data.path.append(SimVoc.nltk_data_path)
+    word = "planned"
+    pos = SimVoc.get_word_pos(word)
+    print(f"Возможные части речи для слова '{word}': {pos}")
 
     print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
-    translated_dict = json.loads(SimVoc.strategy_get_translate_libretranslate("orange", "ru", "en"))  # to JSON object - dict
-    print(translated_dict)
-
+    translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word, "ru", "en"))  # to JSON object - dict
+    print(translated_dict_1)
+    translated_dict_2 = json.loads(SimVoc.strategy_get_translate_libretranslate("to " + word, "ru", "en"))  # to JSON object - dict
+    print(translated_dict_2)
+    translated_dict_3 = json.loads(SimVoc.strategy_get_translate_libretranslate("the " + word, "ru", "en"))  # to JSON object - dict
+    print(translated_dict_3)
