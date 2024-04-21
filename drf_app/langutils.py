@@ -54,6 +54,7 @@ openai.api_key = settings.OPENAI_API_KEY
 class PartSpeech(str, Enum):
     X = "X"  # other
     ADJ = "ADJ"  # adjective
+    ADJ_SAT = "ADJ_SAT"  # adjective satellite
     ADP = "ADP"  # adposition
     ADV = "ADV"  # adverb
     AUX = "AUX"  # auxiliary
@@ -112,11 +113,19 @@ class SimVoc:
         "VERB": PartSpeech.VERB
     }
 
+    ADJ = 'a'
+    ADJ_SAT = 's'
+    ADV = 'r'
+    NOUN = 'n'
+    VERB = 'v'
+
+
     pos_mapping_nltk = {
         "a": PartSpeech.ADJ,
         "r": PartSpeech.ADV,
         "v": PartSpeech.VERB,
         "n": PartSpeech.NOUN,
+        "s": PartSpeech.ADJ_SAT,
     }
 
     def __init__(
@@ -280,7 +289,10 @@ class SimVoc:
         return [w for w in doc]
 
     @staticmethod
-    def get_word_pos(word):
+    def get_word_pos(word: str) -> set:
+
+        nltk.data.path.append(SimVoc.nltk_data_path)
+
         path_to_wordnet = os.path.join(SimVoc.nltk_data_path, 'corpora', 'wordnet.zip')
         print("Path to WordNet:", path_to_wordnet)
         if not os.path.isfile(path_to_wordnet):
@@ -425,7 +437,12 @@ class SimVoc:
 
     # use library Requests https://docs.python-requests.org/en/latest/user/quickstart/
     @staticmethod
-    def strategy_get_translate_libretranslate(text_to_translate: str, lang_to: str, lang_from: str = "en") -> str:
+    def strategy_get_translate_libretranslate(
+            text_to_translate: str,
+            lang_to: str,
+            lang_from: str,
+            part_speech: str = None
+    ) -> str:
         """
             For work well you need specific version googletrans==4.0.0-rc1
             Translate text_to_translate using FREE googletrans service
@@ -435,6 +452,8 @@ class SimVoc:
             :type lang_to: string, limit 2 symbols, for example - 'ru', 'en', 'de'
             :param lang_from: language from you want to get translate
             :type lang_from: string, limit 2 symbols, for example - 'ru', 'en', 'de'
+            :param part_speech: one of value from 'adj', 'adv', 'noun', 'verb', 'pron', 'det', 'prep', 'conj', 'part',
+            'interj'
         """
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
@@ -442,6 +461,7 @@ class SimVoc:
             "q": text_to_translate,
             "source": lang_from,
             "target": lang_to,
+            'tag': part_speech,
         }
 
         try:
@@ -521,15 +541,15 @@ if __name__ == '__main__':
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
-    nltk.data.path.append(SimVoc.nltk_data_path)
-    word = "planned"
+
+    word = "fast"
     pos = SimVoc.get_word_pos(word)
     print(f"Возможные части речи для слова '{word}': {pos}")
 
     print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
-    translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word, "ru", "en"))  # to JSON object - dict
+    translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word, "ru", "en", 'adj'))  # to JSON object - dict
     print(translated_dict_1)
-    translated_dict_2 = json.loads(SimVoc.strategy_get_translate_libretranslate("to " + word, "ru", "en"))  # to JSON object - dict
+    translated_dict_2 = json.loads(SimVoc.strategy_get_translate_libretranslate(word, "ru", "en", 'adv'))  # to JSON object - dict
     print(translated_dict_2)
-    translated_dict_3 = json.loads(SimVoc.strategy_get_translate_libretranslate("the " + word, "ru", "en"))  # to JSON object - dict
-    print(translated_dict_3)
+    # translated_dict_3 = json.loads(SimVoc.strategy_get_translate_libretranslate("the " + word, "ru", "en"))  # to JSON object - dict
+    # print(translated_dict_3)
