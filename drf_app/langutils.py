@@ -282,7 +282,7 @@ class SimVoc:
         return [w for w in doc]
 
     @staticmethod
-    def get_word_pos(word: str) -> set:
+    def get_pos(token: str) -> list:
 
         nltk.data.path.append(SimVoc.nltk_data_path)
 
@@ -292,12 +292,19 @@ class SimVoc:
             logger.info("Downloading WordNet...")
             SimVoc.download_wordnet()
 
-        synsets = wordnet.synsets(word)
+        synsets = wordnet.synsets(token)
+        print(synsets)
         pos = set()
         for synset in synsets:
-            pos.update({SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value})
-            # pos.update({synset.pos()})
-        return pos
+            if synset.name().startswith(token + "."):
+                # pos.update({SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value})
+                pos.update({synset.pos()})
+        pos_list = list(pos)
+        pos_list.sort()  # first element in list - main translation
+        result = []
+        for pos in pos_list:
+            result.append(SimVoc.pos_mapping_nltk.get(pos, "X").value)
+        return result  # pos
 
 
     # TODO need add handle of Errors when strategy func get wrong data in response
@@ -433,8 +440,7 @@ class SimVoc:
     def strategy_get_translate_libretranslate(
             text_to_translate: str,
             lang_to: str,
-            lang_from: str,
-            part_speech: PartSpeech = None
+            lang_from: str
     ) -> str:
         """
             Translate text_to_translate using FREE LibreTranslate model
@@ -444,21 +450,18 @@ class SimVoc:
             :type lang_to: string, limit 2 symbols, for example - 'ru', 'en', 'de'
             :param lang_from: language from you want to get translate
             :type lang_from: string, limit 2 symbols, for example - 'ru', 'en', 'de'
-            :param part_speech: part of speech
-            :type part_speech: PartSpeech
         """
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
-        # pos_set = SimVoc.get_word_pos(text_to_translate)
-        # print(f"Возможные части речи для слова '{text_to_translate}': {pos_set}")
-
-        if part_speech:
-            text = f"{text_to_translate} ({part_speech.value.lower()})"
-        else:
-            text = text_to_translate
+        pos_set = SimVoc.get_pos(text_to_translate)
+        logger.info(f"Возможные части речи для слова '{text_to_translate}': {pos_set}")
+        text_by_list = ""
+        for pos in pos_set:
+            text_by_list = "".join([text_by_list, text_to_translate, f" ({pos.lower()})", " \n"])
+        logger.info(f"text_by_list {text_by_list}")
 
         payload = {
-            "q": text,
+            "q": text_by_list,
             "source": lang_from,
             "target": lang_to,
         }
@@ -472,12 +475,14 @@ class SimVoc:
                     [
                         text_to_translate,
                         None,
-                        response.json().get("translatedText") if not part_speech else response.json().get("translatedText").split()[0],
-                        SimVoc.pos_mapping.get(SimVoc.get_token(text_to_translate)[0].pos_, 'X') if not part_speech else part_speech.value,
+                        response.json().get("translatedText"),
+                        None,
                     ],
                     [],
                     [],
                 )
+                test = response.json().get('translatedText').split('\n')
+                logger.info(f"{test}")
             else:
                 logger.debug(f'Occurred error! Status code: {response.status_code}')
                 logger.debug(f'Response from server: {response.text}')
@@ -541,14 +546,14 @@ if __name__ == '__main__':
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
 
-    word = "slow"
-    pos = SimVoc.get_word_pos(word)
-    print(f"Возможные части речи для слова '{word}': {pos}")
+    word_to_translate = "fast"
+    # pos = SimVoc.get_pos(word_to_translate)
+    # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
 
     print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
-    translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word, "ru", "en", PartSpeech.ADJ_SAT))  # to JSON object - dict
+    translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en"))  # to JSON object - dict
     print(translated_dict_1)
-    translated_dict_2 = json.loads(SimVoc.strategy_get_translate_libretranslate(word, "ru", "en", PartSpeech.ADV))  # to JSON object - dict
-    print(translated_dict_2)
+    # translated_dict_2 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en", PartSpeech.ADV))  # to JSON object - dict
+    # print(translated_dict_2)
     # translated_dict_3 = json.loads(SimVoc.strategy_get_translate_libretranslate("the " + word, "ru", "en"))  # to JSON object - dict
     # print(translated_dict_3)
