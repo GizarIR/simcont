@@ -304,8 +304,8 @@ class SimVoc:
         pos_list = list(pos)
         pos_list.sort()  # first element in list - main translation
         result = []
-        for pos in pos_list:
-            result.append(SimVoc.pos_mapping_nltk.get(pos, "X").value)
+        for i in range(0, len(pos_list)):
+            result.append(SimVoc.pos_mapping_nltk.get(pos_list[i], "X").value)
         return result  # pos
 
 
@@ -472,13 +472,25 @@ class SimVoc:
                 None if not translation else translation.split(" ")[1].replace("(", "").replace(")", "").upper()
             )
 
+        def add_context(token, pos):
+            if pos == PartSpeech.NOUN:
+                return f"a {token}"
+            elif pos == PartSpeech.VERB:
+                return f"you {token}"
+            elif pos in [PartSpeech.ADJ, PartSpeech.ADJ]:
+                return f"is {token}"
+            else:
+                return token
+
+
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
         pos_list = SimVoc.get_pos(text_to_translate)
         logger.info(f"Возможные части речи для слова '{text_to_translate}': {pos_list}")
         text_by_list = ""
         for pos in pos_list:
-            text_by_list = "".join([text_by_list, text_to_translate, f" ({pos.lower()})", " \n"])
+            # TODO need to exclude f"({pos.lower()})" and comeout with idea how synchronise response
+            text_by_list = "".join([text_by_list, add_context(text_to_translate, pos), f"({pos.lower()})", " \n"])
         logger.info(f"text_by_list {text_by_list}")
 
         payload = {
@@ -492,17 +504,20 @@ class SimVoc:
 
             if response.status_code == 200:
                 logger.debug(f'The request was completed successfully. Response from the server: {response.text}')
-                origin_translate_list = response.json().get("translatedText").split("\n")
-                logger.info(origin_translate_list)
+                # origin_translate_list = response.json().get("translatedText").split("\n")
+                # logger.info(origin_translate_list)
+                translate_list = response.json().get("translatedText").split("\n")
+                logger.info(translate_list)
 
-                translated_dict = {}
-                for i in range(0, len(origin_translate_list)):
-                    translated_text = get_translate_unit(text_to_translate, None, origin_translate_list[i])[2]
-                    translated_text_pos = get_translate_unit(text_to_translate, None, origin_translate_list[i])[3]
-                    if translated_text not in translated_dict:
-                        translated_dict[translated_text] = translated_text_pos
 
-                translate_list = [f"{key} ({value})" for key, value in translated_dict.items()]
+                # translated_dict = {}
+                # for i in range(0, len(origin_translate_list)):
+                #     translated_text = get_translate_unit(text_to_translate, None, origin_translate_list[i])[2]
+                #     translated_text_pos = get_translate_unit(text_to_translate, None, origin_translate_list[i])[3]
+                #     if translated_text not in translated_dict:
+                #         translated_dict[translated_text] = translated_text_pos
+                #
+                # translate_list = [f"{key} ({value})" for key, value in translated_dict.items()]
 
                 result = SimVoc.create_translation_json(
                     [
@@ -577,7 +592,7 @@ if __name__ == '__main__':
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
 
-    word_to_translate = "plan"
+    word_to_translate = "orange"
     # pos = SimVoc.get_pos(word_to_translate)
     # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
 
