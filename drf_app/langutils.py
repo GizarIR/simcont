@@ -95,6 +95,7 @@ class SimVoc:
     pos_mapping = {
         "X": PartSpeech.X,
         "ADJ": PartSpeech.ADJ,
+        "ADJ_SAT": PartSpeech.ADJ_SAT,
         "ADP": PartSpeech.ADP,
         "ADV": PartSpeech.ADV,
         "AUX": PartSpeech.AUX,
@@ -253,7 +254,8 @@ class SimVoc:
             main_translate: list,
             extra_data: list = None,
             user_inf: list = None,
-            lang_from: str = "en"):
+            lang_from: str = "en"
+    ) -> json:
 
         if lang_from == "en" and main_translate[1] is None:
             main_translate[1] = 'TEST_PASS'
@@ -451,12 +453,31 @@ class SimVoc:
             :param lang_from: language from you want to get translate
             :type lang_from: string, limit 2 symbols, for example - 'ru', 'en', 'de'
         """
+
+        def get_translate_unit(token: str, audio_pron: str = None, translation: str = None) -> tuple:
+            """
+                Get translation unit:
+                :param token:  word for translate
+                :type token: string, word
+                :param audio_pron:  audio pronunciation
+                :type audio_pron: string by base64 format
+                :param translation:  text of translate
+                :type translation: 'translated_text (POS)'
+                :return: [token, audio_pron, translated_text, POS]
+            """
+            return (
+                token,
+                None if not audio_pron else audio_pron,
+                None if not translation else translation.split(" ")[0],
+                None if not translation else translation.split(" ")[1].replace("(", "").replace(")", "").upper()
+            )
+
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
-        pos_set = SimVoc.get_pos(text_to_translate)
-        logger.info(f"Возможные части речи для слова '{text_to_translate}': {pos_set}")
+        pos_list = SimVoc.get_pos(text_to_translate)
+        logger.info(f"Возможные части речи для слова '{text_to_translate}': {pos_list}")
         text_by_list = ""
-        for pos in pos_set:
+        for pos in pos_list:
             text_by_list = "".join([text_by_list, text_to_translate, f" ({pos.lower()})", " \n"])
         logger.info(f"text_by_list {text_by_list}")
 
@@ -471,18 +492,28 @@ class SimVoc:
 
             if response.status_code == 200:
                 logger.debug(f'The request was completed successfully. Response from the server: {response.text}')
+                origin_translate_list = response.json().get("translatedText").split("\n")
+                logger.info(origin_translate_list)
+
+                translated_dict = {}
+                for i in range(0, len(origin_translate_list)):
+                    translated_text = get_translate_unit(text_to_translate, None, origin_translate_list[i])[2]
+                    translated_text_pos = get_translate_unit(text_to_translate, None, origin_translate_list[i])[3]
+                    if translated_text not in translated_dict:
+                        translated_dict[translated_text] = translated_text_pos
+
+                translate_list = [f"{key} ({value})" for key, value in translated_dict.items()]
+
                 result = SimVoc.create_translation_json(
                     [
                         text_to_translate,
-                        None,
-                        response.json().get("translatedText"),
-                        None,
+                        get_translate_unit(text_to_translate, None, translate_list[0])[1],
+                        get_translate_unit(text_to_translate, None, translate_list[0])[2],
+                        get_translate_unit(text_to_translate, None, translate_list[0])[3]
                     ],
-                    [],
-                    [],
+                    [list(get_translate_unit(text_to_translate, None, translate_list[i])) for i in range(1, len(translate_list))],
+                    None,
                 )
-                test = response.json().get('translatedText').split('\n')
-                logger.info(f"{test}")
             else:
                 logger.debug(f'Occurred error! Status code: {response.status_code}')
                 logger.debug(f'Response from server: {response.text}')
@@ -546,7 +577,7 @@ if __name__ == '__main__':
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
 
-    word_to_translate = "fast"
+    word_to_translate = "plan"
     # pos = SimVoc.get_pos(word_to_translate)
     # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
 

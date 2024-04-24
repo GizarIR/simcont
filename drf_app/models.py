@@ -183,6 +183,7 @@ class Lemma(models.Model):
     class Pos(models.TextChoices):
         X = "X", _("other")
         ADJ = "ADJ", _("adjective")
+        ADJ_SAT = "ADJ_SAT", _("adjective satellite")
         ADP = "ADP", _("adposition")
         ADV = "ADV", _("adverb")
         AUX = "AUX", _("auxiliary")
@@ -208,7 +209,7 @@ class Lemma(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lemma = models.CharField(max_length=150)
     pos = models.CharField(
-        max_length=5,
+        max_length=7,
         choices=Pos.choices,
         default=Pos.X,
     )
