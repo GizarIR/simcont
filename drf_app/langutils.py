@@ -295,12 +295,16 @@ class SimVoc:
 
         synsets = wordnet.synsets(token)
         print(synsets)
+        # TODO need to get order_pos {"NOUN": "number of appear in synsets"}
+        #  and then sort by value of dict
+        #  the most bigger number will be main translate
         pos = set()
         for synset in synsets:
+            print(f"{synset.name()}: {synset.definition()}")
             if synset.name().startswith(token + "."):
                 pos.update({synset.pos()})
         pos_list = list(pos)
-        pos_list.sort()  # first element in list is main translation
+        pos_list.sort()  # first element in list is main translation - !!! This algorithm need to change
         result = []
         for i in range(0, len(pos_list)):
             result.append(SimVoc.pos_mapping_nltk.get(pos_list[i], "X").value)
@@ -453,6 +457,7 @@ class SimVoc:
         """
 
         def add_context(token, pos):
+            #  TODO may be for different cases need to add pos_context - need to check
             if pos == PartSpeech.NOUN:
                 return f"a {token}" if not re.match("^[aeiouAEIOU][A-Za-z0-9_]*", token) else f"an {token}"
             elif pos == PartSpeech.VERB:
@@ -476,16 +481,6 @@ class SimVoc:
 
         for value in dict_for_translate.values():
             logger.info(f"dict_for_translate for translate: {value[1]}")
-
-
-        text_by_list = ""
-
-        for pos in pos_list:
-            text_by_list = "".join([text_by_list, add_context(text_to_translate, pos), " \n"])
-        logger.info(f"text_by_list for translate: {text_by_list}")
-
-        text_by_list_2 = "".join(["".join([value[1], " \n"]) for value in dict_for_translate.values()])
-        logger.info(f"text_by_list_2 for translate \n: {text_by_list_2}")
 
         payload = {
             "q": "".join(["".join([value[1], " \n"]) for value in dict_for_translate.values()]),
@@ -588,7 +583,7 @@ if __name__ == '__main__':
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
 
-    word_to_translate = "plan"
+    word_to_translate = "run" # orange fast close people get run
     # pos = SimVoc.get_pos_list(word_to_translate)
     # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
 
