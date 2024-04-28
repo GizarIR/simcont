@@ -299,10 +299,18 @@ class SimVoc:
         #  and then sort by value of dict
         #  the most bigger number will be main translate
         pos = set()
+        pos_dict = dict()
         for synset in synsets:
             print(f"{synset.name()}: {synset.definition()}")
             if synset.name().startswith(token + "."):
                 pos.update({synset.pos()})
+
+            cur_pos = SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value
+            if cur_pos in pos_dict:
+                pos_dict[cur_pos] = +1
+            else:
+                pos_dict[cur_pos] = 0
+
         pos_list = list(pos)
         pos_list.sort()  # first element in list is main translation - !!! This algorithm need to change
         result = []
