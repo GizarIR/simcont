@@ -294,29 +294,34 @@ class SimVoc:
             SimVoc.download_wordnet()
 
         synsets = wordnet.synsets(token)
-        print(synsets)
         # TODO need to get order_pos {"NOUN": "number of appear in synsets"}
         #  and then sort by value of dict
         #  the most bigger number will be main translate
         pos = set()
-        pos_dict = dict()
+        pos_dict = defaultdict(int)
         for synset in synsets:
-            print(f"{synset.name()}: {synset.definition()}")
+            logger.info(f"{synset.name()}: {synset.definition()}")
             if synset.name().startswith(token + "."):
                 pos.update({synset.pos()})
 
             cur_pos = SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value
-            if cur_pos in pos_dict:
-                pos_dict[cur_pos] = +1
-            else:
-                pos_dict[cur_pos] = 0
+            pos_dict[cur_pos] += 1
+        sorted_pos_dict = dict(sorted(pos_dict.items(), key=lambda item: item[1], reverse=True))
 
-        pos_list = list(pos)
-        pos_list.sort()  # first element in list is main translation - !!! This algorithm need to change
-        result = []
-        for i in range(0, len(pos_list)):
-            result.append(SimVoc.pos_mapping_nltk.get(pos_list[i], "X").value)
-        return result  # list of pos
+        logger.info(f"POS_DICT : {sorted_pos_dict}")
+
+        # pos_list = list(pos)
+        # pos_list.sort()  # first element in list is main translation
+
+        pos_list = list(sorted_pos_dict.keys())
+
+        logger.info(f"POS_LIST_TEMP: {pos_list}")
+
+        # result = []
+        # for i in range(0, len(pos_list)):
+        #     result.append(SimVoc.pos_mapping_nltk.get(pos_list[i], "X").value)
+
+        return pos_list  # list of pos
 
 
     # TODO need add handle of Errors when strategy func get wrong data in response
@@ -467,7 +472,7 @@ class SimVoc:
         def add_context(token, pos):
             #  TODO may be for different cases need to add pos_context - need to check
             if pos == PartSpeech.NOUN:
-                return f"a {token}" if not re.match("^[aeiouAEIOU][A-Za-z0-9_]*", token) else f"an {token}"
+                return f"the {token}" if not re.match("^[aeiouAEIOU][A-Za-z0-9_]*", token) else f"an {token}"
             elif pos == PartSpeech.VERB:
                 return f"to {token}"
             elif pos in [PartSpeech.ADJ, PartSpeech.ADJ]:
