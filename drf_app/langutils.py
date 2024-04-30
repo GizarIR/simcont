@@ -294,16 +294,13 @@ class SimVoc:
             SimVoc.download_wordnet()
 
         synsets = wordnet.synsets(token)
-        # TODO need to get order_pos {"NOUN": "number of appear in synsets"}
-        #  and then sort by value of dict
-        #  the most bigger number will be main translate
-        pos = set()
+
+        # pos = set()
         pos_dict = defaultdict(int)
         for synset in synsets:
             logger.info(f"{synset.name()}: {synset.definition()}")
-            if synset.name().startswith(token + "."):
-                pos.update({synset.pos()})
-
+            # if synset.name().startswith(token + "."):
+            #     pos.update({synset.pos()})
             cur_pos = SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value
             pos_dict[cur_pos] += 1
         sorted_pos_dict = dict(sorted(pos_dict.items(), key=lambda item: item[1], reverse=True))
@@ -313,7 +310,7 @@ class SimVoc:
         # pos_list = list(pos)
         # pos_list.sort()  # first element in list is main translation
 
-        pos_list = list(sorted_pos_dict.keys())
+        pos_list = list(sorted_pos_dict.keys())  # first element in list is main translation
 
         logger.info(f"POS_LIST_TEMP: {pos_list}")
 
@@ -471,6 +468,12 @@ class SimVoc:
 
         def add_context(token, pos):
             #  TODO may be for different cases need to add pos_context - need to check
+            # pos_context = {
+            #     "n": "car",  # Существительное
+            #     "v": "drive",  # Глагол
+            #     "a": "fast",  # Прилагательное
+            #     "r": "quickly"  # Наречие
+            # }
             if pos == PartSpeech.NOUN:
                 return f"the {token}" if not re.match("^[aeiouAEIOU][A-Za-z0-9_]*", token) else f"an {token}"
             elif pos == PartSpeech.VERB:
@@ -479,6 +482,16 @@ class SimVoc:
                 return f"is {token}"
             else:
                 return token
+            # if pos == PartSpeech.NOUN:
+            #     return f"the {token} {pos_context.get('n', '')}"
+            # elif pos == PartSpeech.VERB:
+            #     return f"to {token} {pos_context.get('n', '')} {pos_context.get('a', '')}"
+            # elif pos == PartSpeech.ADJ:
+            #     return f"{token} {pos_context.get('n', '')}"
+            # elif pos == PartSpeech.ADV:
+            #     return f"{token} {pos_context.get('v', '')}"
+            # else:
+            #     return token
 
 
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
@@ -493,7 +506,7 @@ class SimVoc:
         logger.info(f"dict_for_translate for translate: {dict_for_translate}")
 
         for value in dict_for_translate.values():
-            logger.info(f"dict_for_translate for translate: {value[1]}")
+            logger.info(f"dict_for_translate for translate value: {value[1]}")
 
         payload = {
             "q": "".join(["".join([value[1], " \n"]) for value in dict_for_translate.values()]),
@@ -534,8 +547,8 @@ class SimVoc:
                     lang_to
                 )
             else:
-                logger.debug(f'Occurred error! Status code: {response.status_code}')
-                logger.debug(f'Response from server: {response.text}')
+                logger.info(f'Occurred error! Status code: {response.status_code}')
+                logger.info(f'Response from server: {response.text}')
                 result = json.dumps({
                     "error": f'Status code: {response.status_code}, response from server: {response.text}'
                 })
@@ -596,7 +609,7 @@ if __name__ == '__main__':
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
 
-    word_to_translate = "run" # orange fast close people get run
+    word_to_translate = "people" # orange fast close people get run
     # pos = SimVoc.get_pos_list(word_to_translate)
     # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
 
