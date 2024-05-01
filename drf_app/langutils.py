@@ -298,25 +298,16 @@ class SimVoc:
         # pos = set()
         pos_dict = defaultdict(int)
         for synset in synsets:
-            logger.info(f"{synset.name()}: {synset.definition()}")
-            # if synset.name().startswith(token + "."):
-            #     pos.update({synset.pos()})
+            logger.debug(f"{synset.name()}: {synset.definition()}")
             cur_pos = SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value
             pos_dict[cur_pos] += 1
         sorted_pos_dict = dict(sorted(pos_dict.items(), key=lambda item: item[1], reverse=True))
 
-        logger.info(f"POS_DICT : {sorted_pos_dict}")
-
-        # pos_list = list(pos)
-        # pos_list.sort()  # first element in list is main translation
+        logger.debug(f"POS_DICT : {sorted_pos_dict}")
 
         pos_list = list(sorted_pos_dict.keys())  # first element in list is main translation
 
-        logger.info(f"POS_LIST_TEMP: {pos_list}")
-
-        # result = []
-        # for i in range(0, len(pos_list)):
-        #     result.append(SimVoc.pos_mapping_nltk.get(pos_list[i], "X").value)
+        logger.debug(f"POS_LIST: {pos_list}")
 
         return pos_list  # list of pos
 
@@ -466,47 +457,29 @@ class SimVoc:
             :type lang_from: string, limit 2 symbols, for example - 'ru', 'en', 'de'
         """
 
-        def add_context(token, pos):
-            #  TODO may be for different cases need to add pos_context - need to check
-            # pos_context = {
-            #     "n": "car",  # Существительное
-            #     "v": "drive",  # Глагол
-            #     "a": "fast",  # Прилагательное
-            #     "r": "quickly"  # Наречие
-            # }
+        def add_context(token, pos, main_pos):
             if pos == PartSpeech.NOUN:
                 return f"the {token}" if not re.match("^[aeiouAEIOU][A-Za-z0-9_]*", token) else f"an {token}"
-            elif pos == PartSpeech.VERB:
+            elif pos == PartSpeech.VERB and not main_pos == PartSpeech.VERB:
                 return f"to {token}"
-            elif pos in [PartSpeech.ADJ, PartSpeech.ADJ]:
+            elif pos in [PartSpeech.ADJ, PartSpeech.ADJ_SAT]:
                 return f"is {token}"
             else:
                 return token
-            # if pos == PartSpeech.NOUN:
-            #     return f"the {token} {pos_context.get('n', '')}"
-            # elif pos == PartSpeech.VERB:
-            #     return f"to {token} {pos_context.get('n', '')} {pos_context.get('a', '')}"
-            # elif pos == PartSpeech.ADJ:
-            #     return f"{token} {pos_context.get('n', '')}"
-            # elif pos == PartSpeech.ADV:
-            #     return f"{token} {pos_context.get('v', '')}"
-            # else:
-            #     return token
-
 
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
         pos_list = SimVoc.get_pos_list(text_to_translate)
-        logger.info(f"Возможные части речи для слова '{text_to_translate}': {pos_list}")
+        logger.debug(f"Возможные части речи для слова '{text_to_translate}': {pos_list}")
 
         dict_for_translate = {}
         for i in range(0, len(pos_list)):
-            dict_for_translate[i] = [pos_list[i], add_context(text_to_translate, pos_list[i])]
+            dict_for_translate[i] = [pos_list[i], add_context(text_to_translate, pos_list[i], pos_list[0])]
 
-        logger.info(f"dict_for_translate for translate: {dict_for_translate}")
+        logger.debug(f"dict_for_translate for translate: {dict_for_translate}")
 
         for value in dict_for_translate.values():
-            logger.info(f"dict_for_translate for translate value: {value[1]}")
+            logger.debug(f"dict_for_translate for translate value: {value[1]}")
 
         payload = {
             "q": "".join(["".join([value[1], " \n"]) for value in dict_for_translate.values()]),
@@ -525,8 +498,8 @@ class SimVoc:
                 for i in range(0, len(translate_list)):
                     dict_for_translate[i].append(translate_list[i])
 
-                logger.info(f"translate_list: {translate_list}")
-                logger.info(f"dict_for_translate: {dict_for_translate}")
+                logger.debug(f"translate_list: {translate_list}")
+                logger.debug(f"dict_for_translate: {dict_for_translate}")
 
                 result = SimVoc.create_translation_json(
                     [
@@ -608,15 +581,10 @@ if __name__ == '__main__':
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
 
-
-    word_to_translate = "people" # orange fast close people get run
+    word_to_translate = "get"  # orange fast close people get run
     # pos = SimVoc.get_pos_list(word_to_translate)
     # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
 
     print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
     translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en"))  # to JSON object - dict
     print(translated_dict_1)
-    # translated_dict_2 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en", PartSpeech.ADV))  # to JSON object - dict
-    # print(translated_dict_2)
-    # translated_dict_3 = json.loads(SimVoc.strategy_get_translate_libretranslate("the " + word, "ru", "en"))  # to JSON object - dict
-    # print(translated_dict_3)
