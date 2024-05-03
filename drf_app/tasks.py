@@ -74,6 +74,7 @@ def translate_lemma_async(lemma_id, strategy, lang_to) -> None:
                 lemma.pos = _pos or lemma.pos
 
                 lemma.translate_status = Lemma.TranslateStatus.TRANSLATED
+                lemma.translate_source = strategy
 
                 lemma.save()
             logger.info(f"Finished process of get translate for lemma: {lemma.lemma}, "

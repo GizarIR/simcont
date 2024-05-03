@@ -445,7 +445,7 @@ class SimVoc:
     def strategy_get_translate_libretranslate(
             text_to_translate: str,
             lang_to: str,
-            lang_from: str
+            lang_from: str = "en"
     ) -> str:
         """
             Translate text_to_translate using FREE LibreTranslate model

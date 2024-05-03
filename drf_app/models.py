@@ -228,6 +228,8 @@ class Lemma(models.Model):
         default=TranslateStatus.ROOKIE,
     )
 
+    translate_source = models.CharField(max_length=50, blank=True)
+
     def save(self, *args, **kwargs):
         existing_lemma = Lemma.objects.filter(lemma=self.lemma).exists()
         if not self.pk:  # only create (not update)

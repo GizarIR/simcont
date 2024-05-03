@@ -113,7 +113,7 @@ class TranslateLemmaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lemma
-        fields = ('id', 'lemma',  'pos', 'translate', 'translate_status')
+        fields = ('id', 'lemma',  'pos', 'translate', 'translate_status', 'translate_source')
 
 
 class LanguageSerializer(serializers.ModelSerializer):
@@ -186,7 +186,8 @@ class LemmaSerializer(serializers.ModelSerializer):
             'vocabularies_id',
             'educations',
             'educations_id',
-            'translate_status'
+            'translate_status',
+            'translate_source',
         )
 
     def create(self, validated_data):
