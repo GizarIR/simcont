@@ -298,9 +298,11 @@ class SimVoc:
         # pos = set()
         pos_dict = defaultdict(int)
         for synset in synsets:
-            logger.debug(f"{synset.name()}: {synset.definition()}")
+            logger.info(f"{synset.name()}: {synset.definition()}")
             cur_pos = SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value
             pos_dict[cur_pos] += 1
+        #     pos = synset.pos()
+
         sorted_pos_dict = dict(sorted(pos_dict.items(), key=lambda item: item[1], reverse=True))
 
         logger.debug(f"POS_DICT : {sorted_pos_dict}")
@@ -377,35 +379,43 @@ class SimVoc:
         g4f.debug.logging = True  # Enable debug logging
         g4f.debug.version_check = False  # Disable automatic version checking
         # print(g4f.Provider.Bing.params)  # Print supported args for Bing
-        response = g4f.ChatCompletion.create(
-            model=g4f.models.gpt_4,
-            # provider=g4f.Provider.You,
-            messages=[
-                {"role": "user",
-                 "content": SimVoc.prompt_to_ai.format(
-                     LANGUAGES[lang_to],
-                     text_to_translate,
-                     str(num_extra_translate),
-                     text_to_translate,
-                     text_to_translate,
-                     )
-                 }
-            ],
-        )
+        try:
+            response = g4f.ChatCompletion.create(
+                model=g4f.models.gpt_4,
+                # provider=g4f.Provider.You,
+                messages=[
+                    {"role": "user",
+                     "content": SimVoc.prompt_to_ai.format(
+                         LANGUAGES[lang_to],
+                         text_to_translate,
+                         str(num_extra_translate),
+                         text_to_translate,
+                         text_to_translate,
+                         )
+                     }
+                ],
+            )
 
-        response = response.strip()
-        # logger.info(response)
-        response_str = response[response.find('main_translate')-2:response.find('}')+1]
-        response_str = "{" + response_str.replace('\n', '')
-        # logger.info(response_str)
-        response_data = json.loads(response_str)
-        response_data["user_inf"] = []
-        # return json.dumps(response_data, ensure_ascii=False)  # JSON string
-        return SimVoc.create_translation_json(
-            response_data["main_translate"],
-            response_data["extra_data"],
-            response_data["user_inf"],
-        )
+            response = response.strip()
+            # logger.info(response)
+            response_str = response[response.find('main_translate')-2:response.find('}')+1]
+            response_str = "{" + response_str.replace('\n', '')
+            # logger.info(response_str)
+            response_data = json.loads(response_str)
+            response_data["user_inf"] = []
+            # return json.dumps(response_data, ensure_ascii=False)  # JSON string
+            result = SimVoc.create_translation_json(
+                response_data["main_translate"],
+                response_data["extra_data"],
+                response_data["user_inf"],
+            )
+        except requests.exceptions.RequestException as e:
+            logger.info(f'An error occurred while executing the request: {e}')
+            result = json.dumps({
+                "error": f'An error occurred while executing the request: {e}'
+            })
+
+        return result
 
     @staticmethod
     def strategy_get_translate_gtrans(text_to_translate: str, lang_to: str) -> str:
@@ -576,7 +586,7 @@ if __name__ == '__main__':
     # print(f"{'*' * 15} Test G4F {'*' * 15}")
     # translated_dict = json.loads(SimVoc.strategy_get_translate_g4f(random_word, "ru", 1))  # to JSON object - dict
     # print(translated_dict)
-    #
+
 
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
