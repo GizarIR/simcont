@@ -311,6 +311,17 @@ class SimVoc:
 
         logger.debug(f"POS_LIST: {pos_list}")
 
+        SimVoc.load_spacy_model()
+        doc = SimVoc.nlp_instance(token.lower())
+        print(doc[0].text, doc[0].pos_)
+        spacy_pos = doc[0].pos_
+
+        if spacy_pos in pos_list and not pos_list[0] == spacy_pos:
+            pos_list.insert(0, spacy_pos)
+            my_index = pos_list.index(spacy_pos)
+            my_index = pos_list.index(spacy_pos, my_index + 1)
+            pos_list.pop(my_index)
+
         return pos_list  # list of pos
 
 
@@ -590,11 +601,11 @@ if __name__ == '__main__':
 
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
-
-    word_to_translate = "get"  # orange fast close people get run
-    # pos = SimVoc.get_pos_list(word_to_translate)
-    # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
-
+    #
+    word_to_translate = "run"  # orange fast close people get run
+    # # pos = SimVoc.get_pos_list(word_to_translate)
+    # # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
+    #
     print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
     translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en"))  # to JSON object - dict
     print(translated_dict_1)
