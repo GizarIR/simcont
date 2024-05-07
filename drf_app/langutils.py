@@ -258,7 +258,7 @@ class SimVoc:
             lang_to: str = "ru",
             lang_from: str = "en"
     ) -> json:
-        print(f"main_translate[1] {main_translate[1]}, {lang_from}")
+
         if lang_from == "en" and main_translate[1] is None:
             main_translate[1] = eng_to_ipa.ipa_list(main_translate[0])[0][0]
 
@@ -286,7 +286,7 @@ class SimVoc:
         return [w for w in doc]
 
     @staticmethod
-    def get_pos_list(token: str) -> list:
+    def get_pos_list(token: str) -> list and dict:
 
         nltk.data.path.append(SimVoc.nltk_data_path)
 
@@ -299,10 +299,13 @@ class SimVoc:
 
         # pos = set()
         pos_dict = defaultdict(int)
+        def_dict = dict()
         for synset in synsets:
             logger.info(f"{synset.name()}: {synset.definition()}")
             cur_pos = SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value
             pos_dict[cur_pos] += 1
+            if synset.name().endswith("01"):
+                def_dict[cur_pos] = synset.definition()
         #     pos = synset.pos()
 
         sorted_pos_dict = dict(sorted(pos_dict.items(), key=lambda item: item[1], reverse=True))
@@ -315,7 +318,6 @@ class SimVoc:
 
         SimVoc.load_spacy_model()
         doc = SimVoc.nlp_instance(token.lower())
-        print(doc[0].text, doc[0].pos_)
         spacy_pos = doc[0].pos_
 
         if spacy_pos in pos_list and not pos_list[0] == spacy_pos:
@@ -324,7 +326,7 @@ class SimVoc:
             my_index = pos_list.index(spacy_pos, my_index + 1)
             pos_list.pop(my_index)
 
-        return pos_list  # list of pos
+        return pos_list, def_dict  # list of pos
 
 
     # TODO need add handle of Errors when strategy func get wrong data in response
@@ -464,6 +466,7 @@ class SimVoc:
         )
 
     # use library Requests https://docs.python-requests.org/en/latest/user/quickstart/
+    # TODO need test for this strategy
     @staticmethod
     def strategy_get_translate_libretranslate(
             text_to_translate: str,
@@ -480,24 +483,33 @@ class SimVoc:
             :type lang_from: string, limit 2 symbols, for example - 'ru', 'en', 'de'
         """
 
-        def add_context(token, pos, main_pos):
+        def add_context(token, pos, main_pos, def_dict):
             if pos == PartSpeech.NOUN:
-                return f"the {token}" if not re.match("^[aeiouAEIOU][A-Za-z0-9_]*", token) else f"an {token}"
+                if pos == main_pos:
+                    return f"the {token}" if not re.match("^[aeiouAEIOU][A-Za-z0-9_]*", token) else f"an {token}"
+                else:
+                    return f"the {token} - {def_dict[pos]}"
             elif pos == PartSpeech.VERB and not main_pos == PartSpeech.VERB:
-                return f"to {token}"
+                if pos == main_pos:
+                    return f"to {token}"
+                else:
+                    return f"to {token} - {def_dict[pos]}"
             elif pos in [PartSpeech.ADJ, PartSpeech.ADJ_SAT]:
-                return f"is {token}"
+                if pos == main_pos:
+                    return f"is {token}"
+                else:
+                    return f"is {token} - {def_dict[pos]}"
             else:
                 return token
 
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
-        pos_list = SimVoc.get_pos_list(text_to_translate)
+        pos_list, def_dict = SimVoc.get_pos_list(text_to_translate)
         logger.debug(f"Возможные части речи для слова '{text_to_translate}': {pos_list}")
 
         dict_for_translate = {}
         for i in range(0, len(pos_list)):
-            dict_for_translate[i] = [pos_list[i], add_context(text_to_translate, pos_list[i], pos_list[0])]
+            dict_for_translate[i] = [pos_list[i], add_context(text_to_translate, pos_list[i], pos_list[0], def_dict)]
 
         logger.debug(f"dict_for_translate for translate: {dict_for_translate}")
 
@@ -533,8 +545,7 @@ class SimVoc:
                     ],
                     [
                         [
-                            dict_for_translate[i][1],
-                            None,
+                            dict_for_translate[i][1][:dict_for_translate[i][1].find(" - ")] if len(dict_for_translate[i][1].split()) > 1 else dict_for_translate[i][1],
                             dict_for_translate[i][2],
                             dict_for_translate[i][0]
                         ] for i in range(1, len(dict_for_translate))
@@ -604,7 +615,7 @@ if __name__ == '__main__':
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
     #
-    word_to_translate = "run"  # orange fast close people get run
+    word_to_translate = "fast"  # orange fast close people get run
     # # # pos = SimVoc.get_pos_list(word_to_translate)
     # # # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
     # #
