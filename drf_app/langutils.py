@@ -25,6 +25,7 @@ import spacy
 import nltk
 from nltk.corpus import wordnet
 from random_word import RandomWords
+import eng_to_ipa
 
 
 # https://gtts.readthedocs.io/en/latest/index.html
@@ -254,11 +255,12 @@ class SimVoc:
             main_translate: list,
             extra_data: list = None,
             user_inf: list = None,
+            lang_to: str = "ru",
             lang_from: str = "en"
     ) -> json:
-
+        print(f"main_translate[1] {main_translate[1]}, {lang_from}")
         if lang_from == "en" and main_translate[1] is None:
-            main_translate[1] = 'TEST_PASS'
+            main_translate[1] = eng_to_ipa.ipa_list(main_translate[0])[0][0]
 
         return json.dumps(
             {
@@ -538,7 +540,7 @@ class SimVoc:
                         ] for i in range(1, len(dict_for_translate))
                     ],
                     None,
-                    lang_to
+                    lang_from
                 )
             else:
                 logger.info(f'Occurred error! Status code: {response.status_code}')
@@ -603,9 +605,9 @@ if __name__ == '__main__':
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
     #
     word_to_translate = "run"  # orange fast close people get run
-    # # pos = SimVoc.get_pos_list(word_to_translate)
-    # # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
-    #
+    # # # pos = SimVoc.get_pos_list(word_to_translate)
+    # # # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
+    # #
     print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
     translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en"))  # to JSON object - dict
     print(translated_dict_1)
