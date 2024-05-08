@@ -301,7 +301,9 @@ class SimVoc:
         pos_dict = defaultdict(int)
         def_dict = dict()
         for synset in synsets:
-            logger.info(f"{synset.name()}: {synset.definition()}")
+
+            logger.debug(f"{synset.name()}: {synset.definition()}")
+
             cur_pos = SimVoc.pos_mapping_nltk.get(synset.pos(), "X").value
             pos_dict[cur_pos] += 1
             if synset.name().endswith("01"):

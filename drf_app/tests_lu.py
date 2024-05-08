@@ -184,6 +184,19 @@ class LangUtilsTestCase(unittest.TestCase):
         self.assertEqual(len(result), 11)
         self.assertEqual(result[0].lemma_, "Apple")
 
+    def test_strategy_get_translate_libretranslate(self):
+        logger.info(f"test_strategy_get_translate_libretranslate")
+        text_to_translate = "hello"
+        lang_to = "ru"
+
+        result = SimVoc.strategy_get_translate_libretranslate(text_to_translate, lang_to)
+        expected_result = {
+            'main_translate': ['hello', 'həˈloʊ', 'привет', 'NOUN'],
+            'extra_data': [],
+            'users_inf': []
+        }
+
+        self.assertEqual(json.loads(result), expected_result)
 
 if __name__ == '__main__':
     unittest.main()
