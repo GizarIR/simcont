@@ -23,7 +23,8 @@ import g4f
 # https://spacy.io/usage
 import spacy
 import nltk
-from nltk.corpus import wordnet
+from nltk import word_tokenize
+from nltk.corpus import wordnet, stopwords
 from random_word import RandomWords
 import eng_to_ipa
 
@@ -157,9 +158,27 @@ class SimVoc:
             cls.nlp_instance.max_length = cls.NLP_MAX_LENGTH
 
     @staticmethod
-    def download_wordnet():
+    def download_nltk_data():
         nltk.data.path.append(SimVoc.nltk_data_path)
-        nltk.download('wordnet', download_dir=SimVoc.nltk_data_path)
+        try:
+            for module_name in ["wordnet", "stopwords", "punkt"]:
+                if module_name == "stopwords":
+                    path_to_module = os.path.join(SimVoc.nltk_data_path, 'corpora', 'stopwords.zip')
+                    if not os.path.isfile(path_to_module):
+                        logger.info("Downloading StopWords...")
+                        nltk.download(module_name, download_dir=SimVoc.nltk_data_path)
+                elif module_name == "punkt":
+                    path_to_module = os.path.join(SimVoc.nltk_data_path, 'tokenizers', 'punkt.zip')
+                    if not os.path.isfile(path_to_module):
+                        logger.info("Downloading Punkt...")
+                        nltk.download(module_name, download_dir=SimVoc.nltk_data_path)
+                elif module_name == "wordnet":
+                    path_to_module = os.path.join(SimVoc.nltk_data_path, 'corpora', 'wordnet.zip')
+                    if not os.path.isfile(path_to_module):
+                        logger.info("Downloading Wordnet...")
+                        nltk.download(module_name, download_dir=SimVoc.nltk_data_path)
+        except Exception as e:
+            logger.info(str(e))
 
     @staticmethod
     def print_order_lemmas_console(lemmas_dict: dict, limit: int = 1) -> Any:
@@ -213,7 +232,7 @@ class SimVoc:
         return str(clearing_text)
 
     @staticmethod
-    def create_order_lemmas(source_text: str, cons_mode: bool = False) -> dict:
+    def create_order_lemmas(source_text: str, cons_mode: bool = False, filter_mode: bool = False) -> dict:
         """
         Order like this:
         json {
@@ -224,9 +243,21 @@ class SimVoc:
         # Load the 'en_core_web_sm' model
         SimVoc.load_spacy_model()
 
+        SimVoc.download_nltk_data()
+
         # Process the sentence using the loaded model
-        # doc = nlp(source_text)
         doc = SimVoc.nlp_instance(source_text.lower())
+
+        # TODO add filter for stop words with param function
+        #  additional information is here -> https://habr.com/ru/companies/otus/articles/774498/
+        if filter_mode:
+
+            text = "NLTK helps in removing stopwords from the text."
+            tokens = word_tokenize(text)
+            stop_words = set(stopwords.words('english'))
+            filtered_tokens = [word for word in tokens if not word in stop_words]
+            print(filtered_tokens)
+
         unsorted_result = defaultdict(int)
         doc_len = len(doc)
         if cons_mode:
@@ -293,7 +324,7 @@ class SimVoc:
         path_to_wordnet = os.path.join(SimVoc.nltk_data_path, 'corpora', 'wordnet.zip')
         if not os.path.isfile(path_to_wordnet):
             logger.info("Downloading WordNet...")
-            SimVoc.download_wordnet()
+            SimVoc.download_nltk_data("wordnet")
 
         synsets = wordnet.synsets(token)
 
@@ -382,15 +413,6 @@ class SimVoc:
     #     response_data["user_inf"] = []
     #     return json.dumps(response_data, ensure_ascii=False)  # JSON string
 
-
-    # TODO need to fix ERROR in strategy_get_translate_g4f
-    #  https://github.com/xtekky/gpt4free/blob/main/README.md
-    #  need to check using different Providers like this:
-    #  from g4f.Provider import BingCreateImages, OpenaiChat, Gemini
-    #  async def main():
-    #      client = AsyncClient(
-    #          provider=OpenaiChat,
-    #  or https://github.com/xtekky/gpt4free/blob/main/docs/legacy.md
     @staticmethod
     def strategy_get_translate_g4f(text_to_translate: str, lang_to: str, num_extra_translate: int = 1) -> str:
         g4f.debug.logging = True  # Enable debug logging
@@ -414,13 +436,11 @@ class SimVoc:
             )
 
             response = response.strip()
-            # logger.info(response)
             response_str = response[response.find('main_translate')-2:response.find('}')+1]
             response_str = "{" + response_str.replace('\n', '')
-            # logger.info(response_str)
             response_data = json.loads(response_str)
             response_data["user_inf"] = []
-            # return json.dumps(response_data, ensure_ascii=False)  # JSON string
+
             result = SimVoc.create_translation_json(
                 response_data["main_translate"],
                 response_data["extra_data"],
@@ -467,8 +487,6 @@ class SimVoc:
             [],
         )
 
-    # use library Requests https://docs.python-requests.org/en/latest/user/quickstart/
-    # TODO need test for this strategy
     @staticmethod
     def strategy_get_translate_libretranslate(
             text_to_translate: str,
@@ -507,7 +525,7 @@ class SimVoc:
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
         pos_list, def_dict = SimVoc.get_pos_list(text_to_translate)
-        logger.debug(f"Возможные части речи для слова '{text_to_translate}': {pos_list}")
+        logger.debug(f"Possible part of speech for token '{text_to_translate}': {pos_list}")
 
         dict_for_translate = {}
         for i in range(0, len(pos_list)):
@@ -573,27 +591,27 @@ class SimVoc:
 
 if __name__ == '__main__':
 
-    # output_path = 'sandbox/output.txt'
+    output_path = 'sandbox/output.txt'
     # source_path = 'sandbox/pmbok5en.pdf'
-    # source_path = 'sandbox/test_article.pdf'
+    source_path = 'sandbox/test_article.pdf'
     # # source_path = 'sandbox/test_len_doc.pdf'
     # # source_path = 'sandbox/test_speech.txt'
-    # current_path = os.path.abspath(__file__)
-    # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
-    # file_path = os.path.join(parent_path, source_path)
-    # testVoc = SimVoc()
-    # output_file_path = os.path.join(parent_path, output_path)
-    #
-    # with open(file_path, 'rb') as file:
-    #     result = testVoc.convert_to_txt(file, cons_mode=True)
-    #     result = testVoc.clean_text(result)
-    #     order_dict = testVoc.create_order_lemmas(result, cons_mode=True)
-    #     logger.info(f"Hello logger!!!")
-    #     testVoc.print_order_lemmas_console(order_dict)
-    #     # print(order_dict)
-    #
-    # with open(output_file_path, 'w', encoding='utf-8') as output_file:
-    #     output_file.write(result)
+    current_path = os.path.abspath(__file__)
+    parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
+    file_path = os.path.join(parent_path, source_path)
+    testVoc = SimVoc()
+    output_file_path = os.path.join(parent_path, output_path)
+
+    with open(file_path, 'rb') as file:
+        result = testVoc.convert_to_txt(file, cons_mode=True)
+        result = testVoc.clean_text(result)
+        order_dict = testVoc.create_order_lemmas(result, cons_mode=True, filter_mode=True)
+        logger.info(f"Hello logger!!!")
+        # testVoc.print_order_lemmas_console(order_dict)
+        # print(order_dict)
+
+    with open(output_file_path, 'w', encoding='utf-8') as output_file:
+        output_file.write(result)
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
     # translated_dict = json.loads(SimVoc.strategy_get_translate_chatgpt('orange', 'ru')) # to JSON object
@@ -617,10 +635,7 @@ if __name__ == '__main__':
     # sentence = "Apple is looking at buying U.K. startup for $1 billion"
     # print(f"For token: {sentence} lemma is: {SimVoc.get_token(sentence)[0].lemma_}")
     #
-    word_to_translate = "fast"  # orange fast close people get run
-    # # # pos = SimVoc.get_pos_list(word_to_translate)
-    # # # print(f"Возможные части речи для слова '{word_to_translate}': {pos}")
-    # #
-    print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
-    translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en"))  # to JSON object - dict
-    print(translated_dict_1)
+    # word_to_translate = "orange"  # orange fast close people get run
+    # print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
+    # translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en"))  # to JSON object - dict
+    # print(translated_dict_1)
