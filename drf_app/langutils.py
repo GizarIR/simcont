@@ -245,18 +245,17 @@ class SimVoc:
 
         SimVoc.download_nltk_data()
 
-        # Process the sentence using the loaded model
-        doc = SimVoc.nlp_instance(source_text.lower())
-
-        # TODO add filter for stop words with param function
-        #  additional information is here -> https://habr.com/ru/companies/otus/articles/774498/
         if filter_mode:
-
-            text = "NLTK helps in removing stopwords from the text."
+            logger.info("NLTK helps in removing stopwords from the text and then tokenize by SpaCy...")
+            text = source_text.lower()
             tokens = word_tokenize(text)
             stop_words = set(stopwords.words('english'))
-            filtered_tokens = [word for word in tokens if not word in stop_words]
-            print(filtered_tokens)
+            filtered_tokens = [word for word in tokens if len(word) < 1 or not word in stop_words]
+            filtered_tokens_text = " ".join(filtered_tokens)
+            doc = SimVoc.nlp_instance(filtered_tokens_text)
+        else:
+            logger.info("Tokenize only by SpaCy ...")
+            doc = SimVoc.nlp_instance(source_text.lower())
 
         unsorted_result = defaultdict(int)
         doc_len = len(doc)
@@ -317,14 +316,9 @@ class SimVoc:
         return [w for w in doc]
 
     @staticmethod
-    def get_pos_list(token: str) -> list and dict:
+    def get_pos_def(token: str) -> list and dict:
 
-        nltk.data.path.append(SimVoc.nltk_data_path)
-
-        path_to_wordnet = os.path.join(SimVoc.nltk_data_path, 'corpora', 'wordnet.zip')
-        if not os.path.isfile(path_to_wordnet):
-            logger.info("Downloading WordNet...")
-            SimVoc.download_nltk_data("wordnet")
+        SimVoc.download_nltk_data()
 
         synsets = wordnet.synsets(token)
 
@@ -359,7 +353,7 @@ class SimVoc:
             my_index = pos_list.index(spacy_pos, my_index + 1)
             pos_list.pop(my_index)
 
-        return pos_list, def_dict  # list of pos
+        return pos_list, def_dict  # list of pos and dict of definitions
 
 
     # TODO need add handle of Errors when strategy func get wrong data in response
@@ -524,7 +518,7 @@ class SimVoc:
 
         url = f'http://{settings.LIBRETRANSLATE_HOSTNAME}:{settings.LIBRETRANSLATE_PORT}/translate'
 
-        pos_list, def_dict = SimVoc.get_pos_list(text_to_translate)
+        pos_list, def_dict = SimVoc.get_pos_def(text_to_translate)
         logger.debug(f"Possible part of speech for token '{text_to_translate}': {pos_list}")
 
         dict_for_translate = {}
@@ -591,27 +585,27 @@ class SimVoc:
 
 if __name__ == '__main__':
 
-    output_path = 'sandbox/output.txt'
-    # source_path = 'sandbox/pmbok5en.pdf'
-    source_path = 'sandbox/test_article.pdf'
-    # # source_path = 'sandbox/test_len_doc.pdf'
-    # # source_path = 'sandbox/test_speech.txt'
-    current_path = os.path.abspath(__file__)
-    parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
-    file_path = os.path.join(parent_path, source_path)
-    testVoc = SimVoc()
-    output_file_path = os.path.join(parent_path, output_path)
-
-    with open(file_path, 'rb') as file:
-        result = testVoc.convert_to_txt(file, cons_mode=True)
-        result = testVoc.clean_text(result)
-        order_dict = testVoc.create_order_lemmas(result, cons_mode=True, filter_mode=True)
-        logger.info(f"Hello logger!!!")
-        # testVoc.print_order_lemmas_console(order_dict)
-        # print(order_dict)
-
-    with open(output_file_path, 'w', encoding='utf-8') as output_file:
-        output_file.write(result)
+    # output_path = 'sandbox/output.txt'
+    # # source_path = 'sandbox/pmbok5en.pdf'
+    # source_path = 'sandbox/test_article.pdf'
+    # # # source_path = 'sandbox/test_len_doc.pdf'
+    # # # source_path = 'sandbox/test_speech.txt'
+    # current_path = os.path.abspath(__file__)
+    # parent_path = os.path.dirname(os.path.dirname(current_path))  # up to 2 level
+    # file_path = os.path.join(parent_path, source_path)
+    # testVoc = SimVoc()
+    # output_file_path = os.path.join(parent_path, output_path)
+    #
+    # with open(file_path, 'rb') as file:
+    #     result = testVoc.convert_to_txt(file, cons_mode=True)
+    #     result = testVoc.clean_text(result)
+    #     order_dict = testVoc.create_order_lemmas(result, cons_mode=True, filter_mode=True)
+    #     logger.info(f"Hello logger!!!")
+    #     # testVoc.print_order_lemmas_console(order_dict)
+    #     # print(order_dict)
+    #
+    # with open(output_file_path, 'w', encoding='utf-8') as output_file:
+    #     output_file.write(result)
 
     # print(f"{'*' * 15} Test ChatGPT {'*' * 15}") # !!!СТОИТ ДЕНЕГ
     # translated_dict = json.loads(SimVoc.strategy_get_translate_chatgpt('orange', 'ru')) # to JSON object
@@ -639,3 +633,16 @@ if __name__ == '__main__':
     # print(f"{'*' * 15} Test LibreTranslate {'*' * 15}")
     # translated_dict_1 = json.loads(SimVoc.strategy_get_translate_libretranslate(word_to_translate, "ru", "en"))  # to JSON object - dict
     # print(translated_dict_1)
+
+    testVoc = SimVoc()
+    testVoc.download_nltk_data()
+    text = "NLTK helps in removing stopwords from the text text"
+    tokens = word_tokenize(text)
+    stop_words = set(stopwords.words('english'))
+    filtered_tokens = [word for word in tokens if len(word) < 1 or not word in stop_words]
+    print(filtered_tokens)
+    filtered_tokens_text = " ".join(filtered_tokens)
+    # result = testVoc.clean_text()
+    order_dict = testVoc.create_order_lemmas(text, filter_mode=True)
+    print(order_dict)
+

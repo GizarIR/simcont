@@ -23,7 +23,7 @@ def create_order_lemmas_async(voc_id) -> None:
             return None
 
         with transaction.atomic():
-            order_lemmas_dict = SimVoc.create_order_lemmas(vocabulary.source_text)
+            order_lemmas_dict = SimVoc.create_order_lemmas(vocabulary.source_text, filter_mode=True)
             order_lemmas_json = json.dumps(order_lemmas_dict, ensure_ascii=False)
             vocabulary.order_lemmas = order_lemmas_json
             vocabulary.save()
