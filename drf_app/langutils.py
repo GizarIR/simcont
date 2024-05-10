@@ -246,7 +246,7 @@ class SimVoc:
         SimVoc.download_nltk_data()
 
         if filter_mode:
-            logger.info("NLTK helps in removing stopwords from the text and then tokenize by SpaCy...")
+            logger.debug("NLTK helps in removing stopwords from the text and then tokenize by SpaCy...")
             text = source_text.lower()
             tokens = word_tokenize(text)
             stop_words = set(stopwords.words('english'))
@@ -254,7 +254,7 @@ class SimVoc:
             filtered_tokens_text = " ".join(filtered_tokens)
             doc = SimVoc.nlp_instance(filtered_tokens_text)
         else:
-            logger.info("Tokenize only by SpaCy ...")
+            logger.debug("Tokenize only by SpaCy ...")
             doc = SimVoc.nlp_instance(source_text.lower())
 
         unsorted_result = defaultdict(int)
@@ -581,6 +581,9 @@ class SimVoc:
             })
 
         return result
+
+    #  TODO you can strategy of translate with API Словаря — Технологии Яндекса
+    # https://yandex.ru/dev/dictionary/#video1595407890345 it is free
 
 
 if __name__ == '__main__':
